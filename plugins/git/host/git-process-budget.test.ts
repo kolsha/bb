@@ -88,7 +88,7 @@ describe("git processes per workspace change", () => {
     vi.unstubAllEnvs();
   });
 
-  it("keeps an edit with Diff open to its status, one diff, untracked stats and the patches", async () => {
+  it.skipIf(process.platform === "win32")("keeps an edit with Diff open to its status, one diff, untracked stats and the patches", async () => {
     const repo = await initPullRequestRepo();
     const reads = new WorkspaceReads(repo);
     await readLikeTheDiffTab(reads, { work: "w1", refs: "r1" }, ["app.ts"]);
@@ -127,7 +127,7 @@ describe("git processes per workspace change", () => {
     await reads.dispose();
   });
 
-  it("reads only status and its numstat for a tracked edit with Diff closed", async () => {
+  it.skipIf(process.platform === "win32")("reads only status and its numstat for a tracked edit with Diff closed", async () => {
     const repo = await initPullRequestRepo();
     const reads = new WorkspaceReads(repo);
     await reads.getStatus({

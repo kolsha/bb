@@ -1807,31 +1807,35 @@ export class WorkspaceReads {
     }
 
     const overflowCount = maxFiles + 1;
-    const whitespaceArgs = whitespaceDiffArgs(ignoreWhitespace);
-    const combined = await this.runTrackedDiffWithLimit({
-      range,
-      outputArgs: [
-        "--raw",
-        "--numstat",
-        "--no-abbrev",
-        "-M",
-        "-z",
-        ...whitespaceArgs,
-      ],
-      recordFormat: "raw-numstat",
-      maxRecords: overflowCount,
-    });
+    const readNumstat = async () =>
+      (
+        await this.runTrackedDiffWithLimit({
+          range,
+          outputArgs: [
+            "--numstat",
+            "-M",
+            "-z",
+            ...whitespaceDiffArgs(ignoreWhitespace),
+          ],
+          recordFormat: "numstat",
+          maxRecords: overflowCount,
+        })
+      ).stdout;
+    const [combined, whitespaceNumstat] = await Promise.all([
+      this.runTrackedDiffWithLimit({
+        range,
+        outputArgs: ignoreWhitespace
+          ? ["--raw", "--no-abbrev", "-M", "-z"]
+          : ["--raw", "--numstat", "--no-abbrev", "-M", "-z"],
+        recordFormat: ignoreWhitespace ? "raw" : "raw-numstat",
+        maxRecords: overflowCount,
+      }),
+      ignoreWhitespace ? readNumstat() : null,
+    ]);
     const split = splitRawNumstatZ(combined.stdout);
-    const numstat = combined.recordLimitReached
-      ? (
-          await this.runTrackedDiffWithLimit({
-            range,
-            outputArgs: ["--numstat", "-M", "-z", ...whitespaceArgs],
-            recordFormat: "numstat",
-            maxRecords: overflowCount,
-          })
-        ).stdout
-      : split.numstat;
+    const numstat =
+      whitespaceNumstat ??
+      (combined.recordLimitReached ? await readNumstat() : split.numstat);
     const enumeratedTrackedEntries = parseRawDiffEntriesZ(split.raw);
     remember(
       this.trackedEntriesByDiff,

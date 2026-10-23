@@ -8,10 +8,16 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(here, "..");
 const packagesRoot = path.resolve(packageRoot, "..");
 
+const UNSCOPED_WORKSPACE_PACKAGES = new Map([["bb-git-contract", "git-contract"]]);
+
 function resolveWorkspaceSource(id) {
-  const match = /^@bb\/([^/]+)(\/.*)?$/u.exec(id);
+  const match =
+    /^@bb\/([^/]+)(\/.*)?$/u.exec(id) ?? /^(bb-git-contract)(\/.*)?$/u.exec(id);
   if (!match) return null;
-  const packageDirectory = path.join(packagesRoot, match[1]);
+  const packageDirectory = path.join(
+    packagesRoot,
+    UNSCOPED_WORKSPACE_PACKAGES.get(match[1]) ?? match[1],
+  );
   const manifestPath = path.join(packageDirectory, "package.json");
   if (!existsSync(manifestPath)) return null;
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
