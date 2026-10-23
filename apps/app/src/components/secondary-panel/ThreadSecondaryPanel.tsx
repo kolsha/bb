@@ -1,6 +1,7 @@
 import { ThreadDiffContentContext } from "./git-diff/thread-diff-registration";
 import { useThreadDiffContent } from "./git-diff/useThreadDiffContent";
 import { isGitDiffFixedPanelTab } from "@/lib/fixed-panel-tabs-state";
+import { useSystemConfig } from "@/hooks/queries/system-queries";
 import { ThreadInfoContentContext } from "@/components/secondary-panel/thread-info-registration";
 import { usePluginDetailPanelProps } from "@/components/plugin/plugin-detail-navigation";
 import {
@@ -285,6 +286,8 @@ function ThreadSecondaryPanelContent({
     ? boundFullScreenShortcut
     : null;
   const diffShortcut = useAppCommandShortcut("diff.toggle");
+  const reviewTabKeepAliveEnabled =
+    useSystemConfig().data?.experiments.reviewTabKeepAlive === true;
   const visibleTabs = useMemo(
     () => tabs.filter((tab) => tab.isHidden !== true),
     [tabs],
@@ -738,6 +741,16 @@ function ThreadSecondaryPanelContent({
       activeSurfaceFixedTab?.contentFillsRegion === true;
     const isSurfaceTerminalActive =
       activeSurfaceModel?.kind === "terminal" && hasActiveSurfaceTab;
+    const keepGitDiffAlive =
+      reviewTabKeepAliveEnabled &&
+      fixedSurfaceTabs.some((fixedTab) =>
+        isGitDiffFixedPanelTab(fixedTab.tab),
+      );
+    const showGitDiffKeepAlive =
+      keepGitDiffAlive &&
+      !isBrowserSurfaceActive &&
+      activeSurfaceFixedTab !== undefined &&
+      isGitDiffFixedPanelTab(activeSurfaceFixedTab.tab);
 
     return (
       <ImageTabLightboxProvider
@@ -828,6 +841,17 @@ function ThreadSecondaryPanelContent({
             <TitleBarScrollFade tone="sidebar" />
           ) : null}
           {browserSurface}
+          {keepGitDiffAlive ? (
+            <div
+              className={cn(
+                "absolute inset-0 flex min-h-0 flex-1 flex-col overflow-hidden",
+                showGitDiffKeepAlive ? "" : "invisible pointer-events-none",
+              )}
+              aria-hidden={!showGitDiffKeepAlive}
+            >
+              {diffContent}
+            </div>
+          ) : null}
           {isBrowserSurfaceActive ? null : hasActiveSurfaceTab ? (
             <div
               className={
@@ -851,8 +875,8 @@ function ThreadSecondaryPanelContent({
                 )}
               </FilePreviewScrollPositionContext.Provider>
             </div>
-          ) : activeSurfaceFixedTab !== undefined &&
-            fixedSurfaceContent !== undefined ? (
+          ) : showGitDiffKeepAlive ? null : activeSurfaceFixedTab !==
+              undefined && fixedSurfaceContent !== undefined ? (
             <div
               className={
                 fixedSurfaceContentFillsRegion

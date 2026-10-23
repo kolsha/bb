@@ -1160,6 +1160,11 @@ const EXPERIMENT_DEFINITIONS: Record<
     description:
       "Send an open thread's timeline changes over the live connection instead of reloading the latest window after each update.",
   },
+  reviewTabKeepAlive: {
+    label: "Keep code review tab state",
+    description:
+      "Keep the code review (git diff) panel mounted when you switch secondary-panel tabs, so its scroll position and loaded diffs are preserved instead of resetting on return.",
+  },
 };
 export function visibleExperimentKeys(
   performanceDiagnosticsAvailable: boolean,
