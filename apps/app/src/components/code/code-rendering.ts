@@ -27,6 +27,7 @@ export interface BbSourceCodeProps extends SourceCodePresentation {
   className?: string;
   scrollToHighlightedLines?: boolean;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 export interface BbDiffProps extends DiffPresentation {
@@ -35,4 +36,5 @@ export interface BbDiffProps extends DiffPresentation {
   fullFileContents: ExperimentalDiffFullFileContents | null;
   className?: string;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }

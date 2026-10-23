@@ -33,6 +33,7 @@ export function SourceCodeHost({
   className,
   scrollToHighlightedLines,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: SourceCodeHostProps) {
   const replacement = useSourceCodeRendererReplacement();
 
@@ -46,6 +47,7 @@ export function SourceCodeHost({
       className={className}
       scrollToHighlightedLines={scrollToHighlightedLines}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
     />
   );
 

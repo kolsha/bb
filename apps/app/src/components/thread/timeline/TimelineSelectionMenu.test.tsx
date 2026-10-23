@@ -255,6 +255,38 @@ describe("TimelineSelectionMenu", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
+  it("offers a reply-in-side-chat action that reports the selected text", () => {
+    const onReplyInSideChat = vi.fn();
+    render(
+      <TimelineSelectionMenu
+        selection={makeSelection()}
+        onAddToChat={vi.fn()}
+        onReplyInSideChat={onReplyInSideChat}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reply in side chat" }),
+    );
+
+    expect(onReplyInSideChat).toHaveBeenCalledWith("selected text");
+  });
+
+  it("omits the reply-in-side-chat action when no handler is provided", () => {
+    render(
+      <TimelineSelectionMenu
+        selection={makeSelection()}
+        onAddToChat={vi.fn()}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Reply in side chat" }),
+    ).toBeNull();
+  });
+
   it("focuses the composer before a touch add-to-chat action returns", () => {
     function ComposerFocusHandoff() {
       const [selection, setSelection] = useState<MessageProseSelection | null>(

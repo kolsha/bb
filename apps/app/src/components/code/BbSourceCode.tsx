@@ -234,6 +234,7 @@ function BbSourceCode({
   className,
   scrollToHighlightedLines = false,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: BbSourceCodeProps) {
   const fileCacheKey = cacheKey ?? path;
   const file = useMemo<PierreFileContents>(
@@ -264,6 +265,7 @@ function BbSourceCode({
     containerRef,
     enabled: onSelectionAddToChat !== undefined,
     onSelectionAddToChat,
+    onSelectionReplyInSideChat,
   });
   const baseOptions = useMemo<FileOptions<undefined>>(
     () => ({

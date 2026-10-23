@@ -122,6 +122,7 @@ interface FilePreviewProps {
   copyPath?: string | null;
   headerMode?: FilePreviewHeaderMode;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   onOpenInEditor?: (path: string) => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -137,12 +138,14 @@ interface FilePreviewBodyProps {
   viewMode: FilePreviewViewMode;
   markdownLinkRouting?: MarkdownLinkRouting;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 interface HtmlFilePreviewBodyProps {
   iframePreview: ReactNode;
   lineOverflowMode: CodeOverflowMode;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   state: Extract<FilePreviewState, { kind: "html" }>;
   viewMode: FilePreviewViewMode;
 }
@@ -175,12 +178,14 @@ interface FilePreviewLineWrapButtonProps {
 interface MarkdownFilePreviewProps {
   file: FilePreviewFile;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   markdownLinkRouting?: MarkdownLinkRouting;
 }
 
 interface CsvFilePreviewProps {
   file: FilePreviewFile;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 interface FilePreviewImageProps {
@@ -207,6 +212,7 @@ interface FilePreviewCodeProps {
   lineOverflowMode: CodeOverflowMode;
   lineRange: FilePreviewLineRange | null;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   path: string;
 }
 
@@ -458,6 +464,7 @@ export function FilePreview({
   copyPath = null,
   headerMode = "file",
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   onOpenInEditor,
   onRefresh,
   isRefreshing = false,
@@ -588,6 +595,7 @@ export function FilePreview({
         viewMode={bodyViewMode}
         markdownLinkRouting={markdownLinkRouting}
         onSelectionAddToChat={onSelectionAddToChat}
+        onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       />
     </div>
   );
@@ -601,6 +609,7 @@ function FilePreviewBody({
   viewMode,
   markdownLinkRouting,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: FilePreviewBodyProps) {
   if (state.kind === "loading") {
     return <SourceLoadingSkeleton />;
@@ -634,6 +643,7 @@ function FilePreviewBody({
         iframePreview={iframePreview}
         lineOverflowMode={lineOverflowMode}
         onSelectionAddToChat={onSelectionAddToChat}
+        onSelectionReplyInSideChat={onSelectionReplyInSideChat}
         state={state}
         viewMode={viewMode}
       />
@@ -644,6 +654,7 @@ function FilePreviewBody({
       <CsvFilePreview
         file={state.file}
         onSelectionAddToChat={onSelectionAddToChat}
+        onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       />
     );
   }
@@ -653,6 +664,7 @@ function FilePreviewBody({
         file={state.file}
         markdownLinkRouting={markdownLinkRouting}
         onSelectionAddToChat={onSelectionAddToChat}
+        onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       />
     );
   }
@@ -662,6 +674,7 @@ function FilePreviewBody({
       lineOverflowMode={lineOverflowMode}
       lineRange={state.lineRange ?? null}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       path={path}
     />
   );
@@ -1004,6 +1017,7 @@ function HtmlFilePreviewBody({
   iframePreview,
   lineOverflowMode,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   state,
   viewMode,
 }: HtmlFilePreviewBodyProps) {
@@ -1025,6 +1039,7 @@ function HtmlFilePreviewBody({
           lineOverflowMode={lineOverflowMode}
           lineRange={state.lineRange}
           onSelectionAddToChat={onSelectionAddToChat}
+          onSelectionReplyInSideChat={onSelectionReplyInSideChat}
           path={state.file.name}
         />
       </div>
@@ -1035,6 +1050,7 @@ function HtmlFilePreviewBody({
 function MarkdownFilePreview({
   file,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   markdownLinkRouting,
 }: MarkdownFilePreviewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1055,6 +1071,7 @@ function MarkdownFilePreview({
     <SecondaryPanelSelectionActions
       markdown
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
     >
       <div ref={contentRef} className="flex-auto bg-background px-4 py-4">
         <MarkdownPreview
@@ -1067,7 +1084,11 @@ function MarkdownFilePreview({
   );
 }
 
-function CsvFilePreview({ file, onSelectionAddToChat }: CsvFilePreviewProps) {
+function CsvFilePreview({
+  file,
+  onSelectionAddToChat,
+  onSelectionReplyInSideChat,
+}: CsvFilePreviewProps) {
   const preview = useMemo(
     () => buildCsvPreviewData(file.contents),
     [file.contents],
@@ -1099,7 +1120,10 @@ function CsvFilePreview({ file, onSelectionAddToChat }: CsvFilePreviewProps) {
       : totalRowsHeight - lastVirtualRow.end;
 
   return (
-    <SecondaryPanelSelectionActions onSelectionAddToChat={onSelectionAddToChat}>
+    <SecondaryPanelSelectionActions
+      onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
+    >
       <div className="flex min-h-0 flex-auto flex-col bg-surface-raised px-4 py-4">
         <div
           ref={scrollRef}
@@ -1368,6 +1392,7 @@ function FilePreviewCode({
   lineOverflowMode,
   lineRange,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   path,
 }: FilePreviewCodeProps) {
   const highlightedLines = useMemo(
@@ -1386,6 +1411,7 @@ function FilePreviewCode({
       highlightedLines={highlightedLines}
       scrollToHighlightedLines
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
     />
   );
 }

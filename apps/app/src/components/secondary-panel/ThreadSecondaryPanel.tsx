@@ -223,6 +223,7 @@ export interface ThreadSecondaryPanelProps {
   onOpenFileInEditor?: (path: string) => void;
   onOpenFilePreview?: (path: string) => void;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   isConversationCollapsed: boolean;
   onToggleConversationCollapse: () => void;
   renderAsDrawer: boolean;
@@ -269,6 +270,7 @@ function ThreadSecondaryPanelContent({
   onOpenFileInEditor,
   onOpenFilePreview,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   isConversationCollapsed,
   onToggleConversationCollapse,
   renderAsDrawer,
@@ -371,6 +373,7 @@ function ThreadSecondaryPanelContent({
     onOpenFileInEditor,
     onOpenFilePreview,
     onSelectionAddToChat,
+    onSelectionReplyInSideChat,
     workspaceRootPath,
     isDiffPanelLive:
       resolvedGitDiffTabStatus === "eligible" &&

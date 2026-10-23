@@ -34,6 +34,7 @@ interface UsePierreLineSelectionActionsArgs {
   containerRef: RefObject<HTMLElement | null>;
   enabled: boolean;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 export interface PierreLineSelectionActions {
@@ -267,6 +268,7 @@ export function usePierreLineSelectionActions({
   containerRef,
   enabled,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: UsePierreLineSelectionActionsArgs): PierreLineSelectionActions {
   const [activeRange, setActiveRange] = useState<SelectedLineRange | null>(
     null,
@@ -557,6 +559,14 @@ export function usePierreLineSelectionActions({
     [dismissSelection, onSelectionAddToChat],
   );
 
+  const handleSelectionReplyInSideChat = useCallback(
+    (text: string) => {
+      onSelectionReplyInSideChat?.(text);
+      dismissSelection();
+    },
+    [dismissSelection, onSelectionReplyInSideChat],
+  );
+
   const menu = useMemo(
     () =>
       enabled ? (
@@ -567,6 +577,11 @@ export function usePierreLineSelectionActions({
               ? undefined
               : handleSelectionAddToChat
           }
+          onReplyInSideChat={
+            onSelectionReplyInSideChat === undefined
+              ? undefined
+              : handleSelectionReplyInSideChat
+          }
           onDismiss={dismissSelection}
         />
       ) : null,
@@ -575,7 +590,9 @@ export function usePierreLineSelectionActions({
       dismissSelection,
       enabled,
       handleSelectionAddToChat,
+      handleSelectionReplyInSideChat,
       onSelectionAddToChat,
+      onSelectionReplyInSideChat,
     ],
   );
 

@@ -21,6 +21,7 @@ interface SecondaryPanelSelectionActionsProps {
   children: ReactNode;
   markdown?: boolean;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 function isEventTargetWithinNode(
@@ -112,6 +113,7 @@ export function SecondaryPanelSelectionActions({
   children,
   markdown = false,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: SecondaryPanelSelectionActionsProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const pointerStartedInNodeRef = useRef(false);
@@ -251,6 +253,14 @@ export function SecondaryPanelSelectionActions({
     [onSelectionAddToChat],
   );
 
+  const handleReplyInSideChat = useCallback(
+    (text: string) => {
+      onSelectionReplyInSideChat?.(text);
+      setSelection(null);
+    },
+    [onSelectionReplyInSideChat],
+  );
+
   return (
     <>
       <div ref={nodeRef} className="contents">
@@ -261,6 +271,11 @@ export function SecondaryPanelSelectionActions({
           selection={selection}
           onAddToChat={
             onSelectionAddToChat === undefined ? undefined : handleAddToChat
+          }
+          onReplyInSideChat={
+            onSelectionReplyInSideChat === undefined
+              ? undefined
+              : handleReplyInSideChat
           }
           onDismiss={dismissSelection}
         />

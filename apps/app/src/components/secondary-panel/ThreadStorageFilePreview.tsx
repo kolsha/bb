@@ -37,6 +37,7 @@ interface SecondaryPanelFilePreviewProps {
   lineRange?: FilePreviewLineRange | null;
   markdownLinkRouting?: MarkdownLinkRouting;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   onOpenInEditor?: (path: string) => void;
   onRefresh?: () => void;
   statusLabel?: WorkspaceFilePreviewStatusLabel | null;
@@ -183,6 +184,7 @@ export function SecondaryPanelFilePreview({
   lineRange = null,
   markdownLinkRouting,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   onOpenInEditor,
   onRefresh,
   statusLabel = null,
@@ -218,6 +220,7 @@ export function SecondaryPanelFilePreview({
       }
       copyPath={copyPath}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       onOpenInEditor={onOpenInEditor}
       onRefresh={onRefresh}
       isRefreshing={isRefreshing}

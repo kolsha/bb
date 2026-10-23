@@ -48,6 +48,7 @@ interface DiffFilesPanelProps {
   onOpenFilePreview?: (path: string) => void;
   onRequestFileContents?: RequestDiffFileContents;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 export function DiffFilesPanel({
@@ -70,6 +71,7 @@ export function DiffFilesPanel({
   onOpenFilePreview,
   onRequestFileContents,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: DiffFilesPanelProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const {
@@ -286,6 +288,7 @@ export function DiffFilesPanel({
                 onOpenFilePreview={onOpenFilePreview}
                 onRequestFileContents={onRequestFileContents}
                 onSelectionAddToChat={onSelectionAddToChat}
+                onSelectionReplyInSideChat={onSelectionReplyInSideChat}
               />
             </div>
           );
@@ -315,6 +318,7 @@ interface DiffFileRowProps {
   onOpenFilePreview?: (path: string) => void;
   onRequestFileContents?: RequestDiffFileContents;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 function DiffFileRow({
@@ -334,6 +338,7 @@ function DiffFileRow({
   onOpenFilePreview,
   onRequestFileContents,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: DiffFileRowProps) {
   const stateAtom = useMemo(
     () => diffFileCardStateAtomFamily({ diffIdentity, path: entry.path }),
@@ -381,6 +386,7 @@ function DiffFileRow({
       onOpenFilePreview={onOpenFilePreview}
       onRequestFileContents={onRequestFileContents}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
     />
   );
 }

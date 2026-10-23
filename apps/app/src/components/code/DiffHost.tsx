@@ -19,6 +19,7 @@ interface DiffHostProps extends Partial<DiffPresentation> {
   fullFileContents: ExperimentalDiffFullFileContents | null;
   className?: string;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 export function DiffHost({
@@ -30,6 +31,7 @@ export function DiffHost({
   showLineNumbers = true,
   className,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: DiffHostProps) {
   const replacement = useDiffRendererReplacement();
   const isReplaced = replacement.kind === "plugin";
@@ -48,6 +50,7 @@ export function DiffHost({
       showLineNumbers={showLineNumbers}
       className={className}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
     />
   );
 

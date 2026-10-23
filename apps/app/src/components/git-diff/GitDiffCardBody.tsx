@@ -688,6 +688,7 @@ interface GitDiffCardSvgBodyProps {
   fullFileContents: ExperimentalDiffFullFileContents | null;
   presentation: DiffPresentation;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 function GitDiffCardSvgBody({
@@ -699,6 +700,7 @@ function GitDiffCardSvgBody({
   fullFileContents,
   presentation,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: GitDiffCardSvgBodyProps) {
   return displayMode === "preview" ? (
     <GitDiffCardImageBody
@@ -713,6 +715,7 @@ function GitDiffCardSvgBody({
       fullFileContents={fullFileContents}
       {...presentation}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
     />
   );
 }
@@ -723,6 +726,7 @@ interface GitDiffCardBodyProps {
   svgDisplayMode: GitDiffCardSvgDisplayMode;
   reservesCollapseGutter: boolean;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
 }
 
 export function GitDiffCardBody({
@@ -731,6 +735,7 @@ export function GitDiffCardBody({
   svgDisplayMode,
   reservesCollapseGutter,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: GitDiffCardBodyProps) {
   const {
     bodySentinelRef,
@@ -788,6 +793,7 @@ export function GitDiffCardBody({
           fullFileContents={fullFileContents}
           presentation={presentation}
           onSelectionAddToChat={onSelectionAddToChat}
+          onSelectionReplyInSideChat={onSelectionReplyInSideChat}
         />
       ) : (
         <>
@@ -797,6 +803,7 @@ export function GitDiffCardBody({
             fullFileContents={fullFileContents}
             {...presentation}
             onSelectionAddToChat={onSelectionAddToChat}
+            onSelectionReplyInSideChat={onSelectionReplyInSideChat}
           />
           <GitDiffCardContextExpansionFooter
             contextExpansion={contextExpansion}

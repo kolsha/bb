@@ -62,6 +62,7 @@ interface GitDiffTabContentProps {
   onOpenFileInEditor?: (path: string) => void;
   onOpenFilePreview?: (path: string) => void;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   pendingGitDiffScrollPath?: string | null;
   workspaceRootPath?: string | null;
 }
@@ -74,6 +75,7 @@ interface WorkspaceFilePreviewTabContentProps {
   lineRange: FilePreviewLineRange | null;
   markdownLinkRouting?: MarkdownLinkRouting;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   onOpenInEditor?: (path: string) => void;
   source: EnvironmentFilePreviewSource | null;
   statusLabel: WorkspaceFilePreviewStatusLabel | null;
@@ -89,6 +91,7 @@ interface ProjectFilePreviewTabContentProps {
   lineRange: FilePreviewLineRange | null;
   markdownLinkRouting?: MarkdownLinkRouting;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   onOpenInEditor?: (path: string) => void;
   projectId: string;
   rootPath?: string | null;
@@ -103,6 +106,7 @@ interface HostFilePreviewTabContentProps {
   lineRange: FilePreviewLineRange | null;
   markdownLinkRouting?: MarkdownLinkRouting;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   onOpenInEditor?: (path: string) => void;
   threadId: string;
 }
@@ -119,6 +123,7 @@ interface AttachmentFilePreviewTabContentProps {
   isPanelOpen: boolean;
   name: string;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   path: string;
   projectId: string;
 }
@@ -130,6 +135,7 @@ interface ThreadStorageFilePreviewTabContentProps {
   lineRange: FilePreviewLineRange | null;
   markdownLinkRouting?: MarkdownLinkRouting;
   onSelectionAddToChat?: (text: string) => void;
+  onSelectionReplyInSideChat?: (text: string) => void;
   onOpenInEditor?: (path: string) => void;
   threadId: string;
 }
@@ -188,6 +194,7 @@ export function GitDiffTabContent({
   onOpenFileInEditor,
   onOpenFilePreview,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   pendingGitDiffScrollPath,
   workspaceRootPath,
 }: GitDiffTabContentProps) {
@@ -329,6 +336,7 @@ export function GitDiffTabContent({
         onOpenFilePreview={onOpenFilePreview}
         onRequestFileContents={onRequestFileContents}
         onSelectionAddToChat={onSelectionAddToChat}
+        onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       />
     </div>
   );
@@ -342,6 +350,7 @@ export function WorkspaceFilePreviewTabContent({
   lineRange,
   markdownLinkRouting,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   onOpenInEditor,
   source,
   statusLabel,
@@ -395,6 +404,7 @@ export function WorkspaceFilePreviewTabContent({
       lineRange={lineRange}
       markdownLinkRouting={resolvedMarkdownLinkRouting}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       onOpenInEditor={onOpenInEditor}
       statusLabel={statusLabel}
     />
@@ -410,6 +420,7 @@ export function ProjectFilePreviewTabContent({
   lineRange,
   markdownLinkRouting,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   onOpenInEditor,
   projectId,
   rootPath = null,
@@ -452,6 +463,7 @@ export function ProjectFilePreviewTabContent({
       lineRange={lineRange}
       markdownLinkRouting={resolvedMarkdownLinkRouting}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       onOpenInEditor={onOpenInEditor}
       statusLabel={null}
     />
@@ -466,6 +478,7 @@ export function HostFilePreviewTabContent({
   lineRange,
   markdownLinkRouting,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   onOpenInEditor,
   threadId,
 }: HostFilePreviewTabContentProps) {
@@ -497,6 +510,7 @@ export function HostFilePreviewTabContent({
       lineRange={lineRange}
       markdownLinkRouting={resolvedMarkdownLinkRouting}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       onOpenInEditor={onOpenInEditor}
       statusLabel={null}
     />
@@ -541,6 +555,7 @@ export function ThreadStorageFilePreviewTabContent({
   lineRange,
   markdownLinkRouting,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   onOpenInEditor,
   threadId,
 }: ThreadStorageFilePreviewTabContentProps) {
@@ -569,6 +584,7 @@ export function ThreadStorageFilePreviewTabContent({
       lineRange={lineRange}
       markdownLinkRouting={resolvedMarkdownLinkRouting}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       onOpenInEditor={onOpenInEditor}
       statusLabel={null}
     />
@@ -579,6 +595,7 @@ export function AttachmentFilePreviewTabContent({
   isPanelOpen,
   name,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   path,
   projectId,
 }: AttachmentFilePreviewTabContentProps) {
@@ -596,6 +613,7 @@ export function AttachmentFilePreviewTabContent({
       copyPath={null}
       lineRange={null}
       onSelectionAddToChat={onSelectionAddToChat}
+      onSelectionReplyInSideChat={onSelectionReplyInSideChat}
       statusLabel={null}
     />
   );

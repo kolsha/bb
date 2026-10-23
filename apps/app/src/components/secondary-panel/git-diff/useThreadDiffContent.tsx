@@ -47,6 +47,7 @@ type ThreadDiffContentProps = Pick<
   | "onOpenFileInEditor"
   | "onOpenFilePreview"
   | "onSelectionAddToChat"
+  | "onSelectionReplyInSideChat"
   | "workspaceRootPath"
 > & {
   toolbarClassName: string;
@@ -68,6 +69,7 @@ export function useThreadDiffContent({
   onOpenFileInEditor,
   onOpenFilePreview,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
   workspaceRootPath,
   isDiffPanelLive,
   isLayoutOpen,
@@ -255,6 +257,7 @@ export function useThreadDiffContent({
             onOpenFileInEditor={onOpenFileInEditor}
             onOpenFilePreview={onOpenFilePreview}
             onSelectionAddToChat={onSelectionAddToChat}
+            onSelectionReplyInSideChat={onSelectionReplyInSideChat}
             pendingGitDiffScrollPath={pendingGitDiffScrollPath}
             workspaceRootPath={workspaceRootPath}
           />

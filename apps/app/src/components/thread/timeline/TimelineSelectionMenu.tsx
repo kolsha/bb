@@ -35,6 +35,7 @@ interface SelectionAction {
 export interface TimelineSelectionMenuProps {
   selection: MessageProseSelection | null;
   onAddToChat?: (text: string) => void;
+  onReplyInSideChat?: (text: string) => void;
   pluginActions?: readonly ThreadTimelinePluginMessageAction[];
   onDismiss: () => void;
   container?: HTMLElement | null;
@@ -203,6 +204,7 @@ function ActionButton({
 export function TimelineSelectionMenu({
   selection,
   onAddToChat,
+  onReplyInSideChat,
   pluginActions = [],
   onDismiss,
   container,
@@ -251,6 +253,18 @@ export function TimelineSelectionMenu({
             label: "Add to chat",
             onSelect: (currentSelection: MessageProseSelection) =>
               onAddToChat(
+                readSelectedMessageMarkdown() ?? currentSelection.text,
+              ),
+          },
+        ]
+      : []),
+    ...(onReplyInSideChat
+      ? [
+          {
+            icon: "SideChat" as const,
+            label: "Reply in side chat",
+            onSelect: (currentSelection: MessageProseSelection) =>
+              onReplyInSideChat(
                 readSelectedMessageMarkdown() ?? currentSelection.text,
               ),
           },

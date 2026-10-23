@@ -33,6 +33,7 @@ function BbDiff({
   showLineNumbers,
   className,
   onSelectionAddToChat,
+  onSelectionReplyInSideChat,
 }: BbDiffProps) {
   const oldPath = fullFileContents?.old.path;
   const oldContent = fullFileContents?.old.content;
@@ -86,6 +87,7 @@ function BbDiff({
     containerRef,
     enabled: onSelectionAddToChat !== undefined,
     onSelectionAddToChat,
+    onSelectionReplyInSideChat,
   });
   const baseOptions = useMemo<FileDiffOptions<undefined>>(
     () => ({

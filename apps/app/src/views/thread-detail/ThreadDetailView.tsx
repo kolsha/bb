@@ -200,6 +200,7 @@ import {
   SIDE_CHAT_PLUGIN_ID,
   SIDE_CHAT_PLUGIN_PANEL_ACTION_ID,
 } from "@/lib/side-chat-plugin";
+import { callPluginRpc } from "@/lib/plugin-sdk-hooks";
 import { RightPanelFileTabIcon } from "@/components/secondary-panel/RightPanelFileTabIcon";
 import { COARSE_POINTER_COMPACT_ICON_SIZE_CLASS } from "@bb/shared-ui/coarse-pointer-sizing";
 import { PluginItemIcon } from "@/components/plugin/PluginIcon";
@@ -1338,6 +1339,47 @@ function ThreadDetailViewInternal(
     reveal: openCompactDrawer,
     slot: "threadPanelAction",
   });
+
+  const handleSelectionReplyInSideChat = useCallback(
+    async (text: string) => {
+      const anchorText = text.trim();
+      if (anchorText.length === 0) {
+        return;
+      }
+      try {
+        const result = await callPluginRpc(
+          fetch,
+          SIDE_CHAT_PLUGIN_ID,
+          "createSideChat",
+          { sourceThreadId: threadId, anchorText },
+        );
+        const sideChatThreadId =
+          typeof result === "object" &&
+          result !== null &&
+          typeof (result as { threadId?: unknown }).threadId === "string"
+            ? (result as { threadId: string }).threadId
+            : null;
+        if (sideChatThreadId === null) {
+          throw new Error("Unexpected createSideChat response.");
+        }
+        handleOpenTimelinePluginPanel({
+          pluginId: SIDE_CHAT_PLUGIN_ID,
+          actionId: SIDE_CHAT_PLUGIN_PANEL_ACTION_ID,
+          params: {
+            threadId: sideChatThreadId,
+            sourceThreadId: threadId,
+            sourceMessageText: anchorText,
+            sourceSeqEnd: null,
+          },
+        });
+      } catch (error) {
+        appToast.error(
+          `Failed to start side chat: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    },
+    [threadId, handleOpenTimelinePluginPanel],
+  );
 
   const handleSelectFileSearchResult = useCallback(
     (selection: FileSearchSelection) => {
@@ -2578,6 +2620,7 @@ function ThreadDetailViewInternal(
             })}
             onOpenInEditor={handleOpenFileInEditor}
             onSelectionAddToChat={handleSelectionAddToChat}
+            onSelectionReplyInSideChat={handleSelectionReplyInSideChat}
             source={tab.source}
             statusLabel={tab.statusLabel}
             threadId={thread.id}
@@ -2605,6 +2648,7 @@ function ThreadDetailViewInternal(
             })}
             onOpenInEditor={handleOpenHostFileInEditor}
             onSelectionAddToChat={handleSelectionAddToChat}
+            onSelectionReplyInSideChat={handleSelectionReplyInSideChat}
             threadId={thread.id}
           />
         );
@@ -2615,6 +2659,7 @@ function ThreadDetailViewInternal(
             isPanelOpen={isSecondaryPanelOpen}
             name={tab.name}
             onSelectionAddToChat={handleSelectionAddToChat}
+            onSelectionReplyInSideChat={handleSelectionReplyInSideChat}
             path={tab.path}
             projectId={tab.projectId}
           />
@@ -2640,6 +2685,7 @@ function ThreadDetailViewInternal(
             })}
             onOpenInEditor={handleOpenStorageFileInEditor}
             onSelectionAddToChat={handleSelectionAddToChat}
+            onSelectionReplyInSideChat={handleSelectionReplyInSideChat}
             threadId={thread.id}
           />
         );
@@ -2893,6 +2939,7 @@ function ThreadDetailViewInternal(
               },
               onOpenFilePreview: handleOpenFilePreview,
               onSelectionAddToChat: handleSelectionAddToChat,
+              onSelectionReplyInSideChat: handleSelectionReplyInSideChat,
               pendingGitDiffCommitSha,
               pendingGitDiffScrollPath,
               requestedMergeBaseBranch,
