@@ -50,7 +50,6 @@ import type { NotificationHub } from "../../src/ws/hub.js";
 import { NotificationHub as NotificationHubImpl } from "../../src/ws/hub.js";
 import { WatchInterestCoordinator } from "../../src/ws/watch-interests.js";
 import { HostSharedPortCoordinator } from "../../src/ws/host-shared-ports.js";
-import { WorkspaceReadCaches } from "../../src/services/environments/workspace-read-cache.js";
 import {
   PluginToolCallRegistry,
   setPluginToolCallRegistry,
@@ -79,7 +78,7 @@ export interface RunningTestServer extends TestAppHarness {
 
 export async function installTestBuiltinPlugin(
   harness: Pick<TestAppHarness, "pluginService">,
-  name: "keep-awake",
+  name: "keep-awake" | "git",
 ): Promise<void> {
   const entry = await harness.pluginService.install(`builtin:${name}`, {
     kind: "root",
@@ -179,7 +178,6 @@ export async function createTestAppHarness(
   const hub = new NotificationHubImpl();
   const watchInterests = new WatchInterestCoordinator({ db, hub });
   const sharedPorts = new HostSharedPortCoordinator({ db, hub });
-  const workspaceReadCaches = new WorkspaceReadCaches({ hub });
   const providerRegistry = createProviderRegistryService({
     readUserProviderPreferences: () => {
       const settings = getAppSettings(db);
@@ -337,7 +335,6 @@ export async function createTestAppHarness(
     terminalSessions,
     watchInterests,
     sharedPorts,
-    workspaceReadCaches,
   };
   const { app, pluginCatalogService, pluginService, serverMove } =
     createApp(deps);

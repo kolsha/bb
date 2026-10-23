@@ -1917,7 +1917,7 @@ describe("plugin thread panel actions", () => {
     const entries = usePluginPanelActions({
       openPluginPanel,
       threadId,
-      actions: useThreadFixedTabs({ threadId }).actions,
+      actions: useThreadFixedTabs({ threadId, environment: null }).actions,
     });
     return (
       <div>
@@ -2060,7 +2060,8 @@ describe("plugin thread panel actions", () => {
 
     function BothActionsHarness() {
       const threadEntries = usePluginPanelActions({
-        actions: useThreadFixedTabs({ threadId: "thr_one" }).actions,
+        actions: useThreadFixedTabs({ threadId: "thr_one", environment: null })
+          .actions,
         openPluginPanel: () => undefined,
         threadId: "thr_9",
       });

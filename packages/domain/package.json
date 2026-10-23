@@ -97,6 +97,7 @@
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
+    "bb-git-contract": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {

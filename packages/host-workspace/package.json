@@ -18,8 +18,10 @@
   },
   "dependencies": {
     "@bb/domain": "workspace:*",
+    "bb-git-contract": "workspace:*",
     "@bb/process-utils": "workspace:*",
-    "bb-environment-provider-host": "workspace:*"
+    "bb-environment-provider-host": "workspace:*",
+    "bb-git-host": "workspace:*"
   },
   "devDependencies": {
     "@bb/test-helpers": "workspace:*",

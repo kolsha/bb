@@ -33,7 +33,17 @@ export function usePluginCommandBindings() {
                 all: ["mainSurface", "promptAvailable"],
                 none: ["modalOpen", "terminalFocus", "browserFocus"],
               }
-            : { all: ["mainSurface"], none: ["modalOpen"] },
+            : command.experimental_inactiveInInputs === true
+              ? {
+                  all: ["mainSurface"],
+                  none: [
+                    "modalOpen",
+                    "editableFocus",
+                    "terminalFocus",
+                    "browserFocus",
+                  ],
+                }
+              : { all: ["mainSurface"], none: ["modalOpen"] },
       }),
     );
     const resolved = resolvePluginCommandDefaults(

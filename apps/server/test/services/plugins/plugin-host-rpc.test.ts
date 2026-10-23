@@ -14,7 +14,53 @@ const contract = defineRpcContract({
   },
 });
 
+const readContract = defineRpcContract({
+  read: {
+    experimental_retryable: true,
+    input: z.object({ id: z.string() }),
+    output: z.object({ path: z.string() }),
+  },
+});
+
 describe("callPluginHostRpc", () => {
+  it("sends a retryable read again with a new call id when the daemon drops its response", async () => {
+    await withTestHarness(async (harness) => {
+      const { host, session } = seedHostSession(harness.deps);
+      const callIds: string[] = [];
+      const cancelled: string[] = [];
+      const responder = registerHostRpcResponder(harness, {
+        hostId: host.id,
+        sessionId: session.id,
+        handle: async (request) => {
+          if (request.command.type === "plugin.host.cancel") {
+            cancelled.push(request.command.callId);
+            return { ok: true, result: { cancelled: true } };
+          }
+          if (request.command.type !== "plugin.host.call")
+            throw new Error(`Unexpected RPC ${request.command.type}`);
+          callIds.push(request.command.callId);
+          if (callIds.length === 1) return new Promise(() => {});
+          return { ok: true, result: { output: { path: "read" } } };
+        },
+      });
+      await expect(
+        callPluginHostRpc(harness.deps, {
+          pluginId: "environment-test",
+          contract: readContract,
+          method: "read",
+          input: { id: "env-1" },
+          hostId: host.id,
+          timeoutMs: 1_000,
+          artifact: stubHostArtifact("environment-test"),
+        }),
+      ).resolves.toEqual({ path: "read" });
+      expect(callIds).toHaveLength(2);
+      expect(callIds[1]).not.toBe(callIds[0]);
+      await vi.waitFor(() => expect(cancelled).toEqual([callIds[0]]));
+      responder.unregister();
+    });
+  });
+
   it("forwards a 20MB recording through the existing daemon wire contract", async () => {
     await withTestHarness(async (harness) => {
       const { host, session } = seedHostSession(harness.deps);

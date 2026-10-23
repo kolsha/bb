@@ -3,6 +3,7 @@ import { Icon } from "@bb/shared-ui/icon";
 import { useCallback, useMemo } from "react";
 import type {
   ExperimentalInfoListRowProps,
+  ExperimentalInfoRowTimeProps,
   MarkdownProps,
   PluginSdkApp,
 } from "@get-bb/plugin-sdk";
@@ -117,7 +118,9 @@ import { SidebarNavigationIcon } from "@/components/sidebar/SidebarNavigationMod
 import {
   InfoList,
   InfoListRow,
+  InfoRowTime,
   InfoSection,
+  InfoSubheading,
 } from "@/components/secondary-panel/info/info-list";
 import { DetailRow } from "@/components/ui/detail-card";
 
@@ -131,6 +134,10 @@ function PluginInfoListRow({
       target={onSelect === undefined ? null : { kind: "button", onSelect }}
     />
   );
+}
+
+function PluginInfoRowTime(props: ExperimentalInfoRowTimeProps) {
+  return <InfoRowTime {...props} />;
 }
 
 function useArchiveEnvironmentThreads(): (
@@ -195,6 +202,8 @@ export const pluginSdkAppImplementation = {
   experimental_DetailRow: DetailRow,
   experimental_InfoList: InfoList,
   experimental_InfoListRow: PluginInfoListRow,
+  experimental_InfoRowTime: PluginInfoRowTime,
+  experimental_InfoSubheading: InfoSubheading,
   experimental_useSidebarThreads: useSidebarThreads,
   experimental_useSidebarThreadActions: useSidebarThreadActions,
   experimental_useThreadActions: useThreadActionEntries,

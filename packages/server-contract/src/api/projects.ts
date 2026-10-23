@@ -2,11 +2,9 @@ import { z } from "zod";
 import {
   FILE_LIST_QUERY_MAX_LENGTH,
   getProjectPathValidationMessage,
-  gitBranchNameSchema,
   normalizeProjectPathInput,
   projectExecutionDefaultsSchema,
   projectSchema,
-  projectSourceCheckoutSchema,
   projectSourceSchema,
   promptHistoryEntrySchema,
   threadListEntrySchema,
@@ -17,6 +15,10 @@ import {
   isCommaSeparatedIncludeQueryValue,
   pathListIncludeQueryValueSchema,
 } from "./shared.js";
+import {
+  gitBranchNameSchema,
+  projectSourceCheckoutSchema,
+} from "bb-git-contract";
 
 const localProjectPathRequestSchema = z
   .string()

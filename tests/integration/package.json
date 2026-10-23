@@ -14,6 +14,8 @@
     "@bb/config": "workspace:*",
     "@bb/db": "workspace:*",
     "@bb/domain": "workspace:*",
+    "bb-git-contract": "workspace:*",
+    "bb-plugin-bb--git": "workspace:*",
     "@bb/host-daemon": "workspace:*",
     "@bb/host-daemon-contract": "workspace:*",
     "@bb/server": "workspace:*",

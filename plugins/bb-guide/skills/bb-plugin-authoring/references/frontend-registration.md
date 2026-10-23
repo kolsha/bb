@@ -207,13 +207,14 @@ remembers it per registration. A crash removes only that row or section.
 
 `app.slots.experimental_threadContextSegment({ id, title, order?, placement?, component, useVisible? })`
 adds a segment to the context row above an open thread's composer, or with
-`placement: "before"` a card above that row; bb's parent thread (order 100),
-changed files (300) and child threads use it too. The host mounts the component
+`placement: "before"` a card above that row; bb's parent thread (order 100)
+and child threads use it too, as does the Git plugin's changed files (300). The host mounts the component
 once per `part`, each in its own crash boundary: `summary` in the row, `action`
 at its end, `details` below it. Props carry `threadId`, `projectId`,
 `environment` (null without a usable environment or when "Show Git changes" is
 off), the visible `segments` in row order, and `isExpanded`/`onToggle` (one
-segment is expanded at a time). `useVisible(input)` false leaves it out.
+segment is expanded at a time). `useVisible(input)` false leaves it out;
+`"pending"` holds the whole row back until no inline segment is pending.
 
 ### An action in every thread menu
 

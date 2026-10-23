@@ -1,6 +1,3 @@
-import { ThreadDiffContentContext } from "./git-diff/thread-diff-registration";
-import { useThreadDiffContent } from "./git-diff/useThreadDiffContent";
-import { isGitDiffFixedPanelTab } from "@/lib/fixed-panel-tabs-state";
 import { ThreadInfoContentContext } from "@/components/secondary-panel/thread-info-registration";
 import { usePluginDetailPanelProps } from "@/components/plugin/plugin-detail-navigation";
 import {
@@ -58,7 +55,6 @@ import type {
   SecondaryPanelRenderableTab,
   SecondaryPanelTabReorderHandler,
 } from "./secondaryPanelTab";
-import { useResponsiveGitDiffPanelDisplay } from "./git-diff/useResponsiveGitDiffPanelDisplay";
 import { useSecondaryPanelResize } from "./useSecondaryPanelResize";
 import { threadSecondaryPanelResizingAtom } from "./threadSecondaryPanelAtoms";
 import {
@@ -101,7 +97,6 @@ import {
   type SidebarSplitTabDescriptor,
 } from "./SidebarSplitContainer";
 import { SIDEBAR_FIXED_INFO_TAB_ID } from "./sidebarSplitLayout";
-import type { GitDiffTabStatus } from "./gitDiffTabEligibility";
 export type {
   SecondaryPanelPaneRenderContext,
   SecondaryPanelRenderableTab,
@@ -184,18 +179,15 @@ export interface SecondaryPanelFixedTab {
   leadingVisual: ReactNode;
   onSelect: () => void;
   renderContent?: (pane: SecondaryPanelPaneRenderContext) => ReactNode;
+  shortcut?: AppShortcutPresentation | null;
   tab: FixedPanelViewTab;
   title: string;
 }
 
 export interface ThreadSecondaryPanelProps {
   activeTab: SecondaryFixedPanelTab | MarketplacePluginDetailPanelTab | null;
-  canUseGitUi: boolean;
   canNavigateTabs?: boolean;
   areFixedTabsReady?: boolean;
-  gitDiffTabStatus?: GitDiffTabStatus;
-  onRetryGitDiffEligibility?: () => void;
-  requestedMergeBaseBranch?: string;
   environmentId?: string;
   metadataContent: ReactNode;
   tabs: readonly SecondaryPanelRenderableTab[];
@@ -215,10 +207,7 @@ export interface ThreadSecondaryPanelProps {
   onPanelFocus: () => void;
   onCollapse: () => void;
   onClose: () => void;
-  onClearPendingGitDiffIntent?: () => void;
   onOpenNewTab: () => void;
-  pendingGitDiffCommitSha?: string | null;
-  pendingGitDiffScrollPath?: string | null;
   workspaceRootPath?: string | null;
   onOpenFileInEditor?: (path: string) => void;
   onOpenFilePreview?: (path: string) => void;
@@ -240,11 +229,8 @@ export function ThreadSecondaryPanel(props: ThreadSecondaryPanelProps) {
 
 function ThreadSecondaryPanelContent({
   activeTab,
-  canUseGitUi,
   canNavigateTabs = true,
   areFixedTabsReady = true,
-  gitDiffTabStatus,
-  requestedMergeBaseBranch,
   environmentId,
   tabs,
   fixedTabs,
@@ -260,11 +246,7 @@ function ThreadSecondaryPanelContent({
   onPanelFocus,
   onCollapse,
   onClose,
-  onClearPendingGitDiffIntent,
   onOpenNewTab,
-  onRetryGitDiffEligibility,
-  pendingGitDiffCommitSha,
-  pendingGitDiffScrollPath,
   workspaceRootPath,
   onOpenFileInEditor,
   onOpenFilePreview,
@@ -274,8 +256,6 @@ function ThreadSecondaryPanelContent({
   renderAsDrawer,
   isAtWindowTop = false,
 }: ThreadSecondaryPanelProps) {
-  const resolvedGitDiffTabStatus =
-    gitDiffTabStatus ?? (canUseGitUi ? "eligible" : "ineligible");
   const newTabShortcut = useAppCommandShortcut("panel.newTab");
   const togglePanelShortcut = useAppCommandShortcut("panel.toggle");
   const boundFullScreenShortcut = useAppCommandShortcut(
@@ -284,7 +264,6 @@ function ThreadSecondaryPanelContent({
   const fullScreenShortcut = showFullScreenShortcut
     ? boundFullScreenShortcut
     : null;
-  const diffShortcut = useAppCommandShortcut("diff.toggle");
   const visibleTabs = useMemo(
     () => tabs.filter((tab) => tab.isHidden !== true),
     [tabs],
@@ -314,11 +293,6 @@ function ThreadSecondaryPanelContent({
           onToggleConversationCollapse,
         });
   const {
-    gitDiffDisplayMode,
-    handleGitDiffDisplayModeChange,
-    handleSecondaryPanelWidthChange,
-  } = useResponsiveGitDiffPanelDisplay({ isSecondaryPanelOpen: isOpen });
-  const {
     handleSecondaryPanelResize,
     resizeHitTargetRef,
     persistedWidthPercent,
@@ -326,7 +300,6 @@ function ThreadSecondaryPanelContent({
     secondaryResizablePanelRef: resizablePanelRef,
   } = useSecondaryPanelResize({
     isSecondaryPanelOpen: isOpen,
-    onPanelWidthChange: handleSecondaryPanelWidthChange,
     panelId: resizablePanelId,
     renderAsDrawer,
   });
@@ -360,27 +333,6 @@ function ThreadSecondaryPanelContent({
   const activeFixedTab =
     fixedTabs.find((fixedTab) => fixedTab.tab.id === activeTab?.id) ??
     (!hasActiveRenderableTab ? fixedTabs[0] : undefined);
-  const diffContent = useThreadDiffContent({
-    toolbarClassName: getSecondaryPanelChromeStackClassName(true),
-    environmentId,
-    requestedMergeBaseBranch,
-    onClearPendingGitDiffIntent,
-    pendingGitDiffCommitSha,
-    pendingGitDiffScrollPath,
-    onRetryGitDiffEligibility,
-    onOpenFileInEditor,
-    onOpenFilePreview,
-    onSelectionAddToChat,
-    workspaceRootPath,
-    isDiffPanelLive:
-      resolvedGitDiffTabStatus === "eligible" &&
-      isGitDiffFixedPanelTab(activeFixedTab?.tab) &&
-      isLayoutOpen,
-    isLayoutOpen,
-    resolvedGitDiffTabStatus,
-    gitDiffDisplayMode,
-    handleGitDiffDisplayModeChange,
-  });
   const isSecondaryPanelResizing = useAtomValue(
     threadSecondaryPanelResizingAtom,
   );
@@ -635,9 +587,7 @@ function ThreadSecondaryPanelContent({
     return (
       <>
         {fixedSurfaceTabs.map((fixedTab) => {
-          const shortcut = isGitDiffFixedPanelTab(fixedTab.tab)
-            ? diffShortcut
-            : null;
+          const shortcut = fixedTab.shortcut ?? null;
           return (
             <PinnedIconTab
               key={fixedTab.tab.id}
@@ -704,7 +654,11 @@ function ThreadSecondaryPanelContent({
       surfaceTabs.find((tab) => tab.tab.id === activeSurfaceTabId) ?? null;
     const activeSurfaceModel = activeSurfaceTab?.tab ?? null;
     const hasActiveSurfaceTab = activeSurfaceTab !== null;
-    const paneRenderContext = { isFocused, onFocusPane };
+    const paneRenderContext = {
+      isFocused,
+      isOpen: isLayoutOpen,
+      onFocusPane,
+    };
     const isBrowserSurfaceActive = activeSurfaceModel?.kind === "browser";
     const browserSurface =
       renderBrowserDeck === undefined ||
@@ -860,9 +814,7 @@ function ThreadSecondaryPanelContent({
                   : cn(PANEL_SCROLL_SLOT_CLASS, "p-4 pb-3")
               }
             >
-              <ThreadDiffContentContext.Provider value={diffContent}>
-                {fixedSurfaceContent}
-              </ThreadDiffContentContext.Provider>
+              {fixedSurfaceContent}
             </div>
           ) : isLayoutOpen ? (
             <EmptyStatePanel className="m-4 rounded-lg">

@@ -49,7 +49,6 @@ import {
   PERSONAL_PROJECT_ID,
   isLocalPathProjectSource,
   type EnvironmentMachineSelection,
-  type GitBranchSelection,
   type JsonValue,
 } from "@bb/domain";
 import type {
@@ -95,6 +94,9 @@ import {
 } from "../environments/provider-availability.js";
 import { resolveStableThreadRequestEnvironment } from "./thread-request-eligibility.js";
 import type { ThreadProvisionEnvironmentIntent } from "./thread-startup-store.js";
+import type {
+  GitBranchSelection,
+} from "bb-git-contract";
 
 type PlacementDeps = LoggedPendingInteractionWorkSessionDeps;
 

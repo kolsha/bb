@@ -812,6 +812,42 @@ describe("app keybindings", () => {
     });
   });
 
+  it("moves a saved Diff toggle override to the Git plugin's command", async () => {
+    const shortcut = {
+      key: "g",
+      mod: true,
+      meta: false,
+      control: false,
+      alt: false,
+      shift: false,
+    };
+    await withTestHarness(async (harness) => {
+      harness.db.$client
+        .prepare(
+          `INSERT INTO app_settings_values (key, value, updated_at)
+           VALUES (?, ?, ?)
+           ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+        )
+        .run(
+          "keybindingOverrides",
+          JSON.stringify([{ command: "diff.toggle", shortcut }]),
+          Date.now(),
+        );
+
+      const response = await harness.app.request("/api/v1/system/config");
+      const config = systemConfigResponseSchema.parse(await readJson(response));
+      expect(config.keybindingOverrides).toEqual([
+        { command: "plugin:bb--git/toggle-diff", shortcut },
+      ]);
+    });
+    expect(
+      appKeybindingOverridesSchema.parse([
+        { command: "diff.toggle", shortcut },
+        { command: "plugin:bb--git/toggle-diff", shortcut: null },
+      ]),
+    ).toEqual([{ command: "plugin:bb--git/toggle-diff", shortcut: null }]);
+  });
+
   it("falls back to defaults when stored overrides are corrupt", async () => {
     await withTestHarness(async (harness) => {
       harness.db.$client

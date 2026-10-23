@@ -1,0 +1,2 @@
+export const BRANCH_LIST_QUERY_MAX_LENGTH = 256;
+export const BRANCH_LIST_LIMIT_MAX = 1_000;

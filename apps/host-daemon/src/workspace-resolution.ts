@@ -1,17 +1,21 @@
 import type {
   HostDaemonInjectedSkillSource,
   WorkspaceContext,
-  WorkspaceResolutionFailure,
-  WorkspaceResolutionFailureCode,
 } from "@bb/host-daemon-contract";
-import { workspaceResolutionFailureCodeSchema } from "@bb/host-daemon-contract";
-import { WorkspaceError } from "@bb/host-workspace";
 import type { RuntimeEntry, RuntimeManager } from "./runtime-manager.js";
 import {
   CommandDispatchError,
   ExpectedCommandDispatchError,
   requireWorkspaceEnvironment,
 } from "./command-dispatch-support.js";
+import {
+  type WorkspaceResolutionFailure,
+  type WorkspaceResolutionFailureCode,
+  workspaceResolutionFailureCodeSchema,
+} from "bb-git-contract";
+import {
+  WorkspaceError,
+} from "bb-git-host/git";
 
 const WORKSPACE_RESOLUTION_FAILURE_CODES: readonly WorkspaceResolutionFailureCode[] =
   workspaceResolutionFailureCodeSchema.options;

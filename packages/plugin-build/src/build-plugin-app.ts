@@ -33,6 +33,7 @@ import {
   SHARED_UI_QUESTION_FORM_HOST_SPECIFIER,
   SHARED_UI_VOICE_INPUT_TEXTAREA_SPECIFIER,
 } from "./runtime-shims.mjs";
+import { retiredSdkMemberWarnings } from "./retired-sdk-members.js";
 import {
   pluginScopeRoots,
   scopePluginUtilities,
@@ -217,6 +218,9 @@ export function runtimeShimPlugin(pluginSdkAppModuleUrl?: string): Plugin {
             warnings.push({
               text: `navPanel.fixedTabs is retired from SDK typings. Register each tab with app.slots.experimental_tab({ context: { kind: "nav-panel", panelId }, availability: "fixed", id, title, icon, component }). Existing bundles remain supported. ${migration}`,
             });
+          }
+          for (const text of retiredSdkMemberWarnings(source)) {
+            warnings.push({ text });
           }
           if (warnings.length === 0) return undefined;
           return {

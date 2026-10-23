@@ -23,8 +23,9 @@ describe("bundled plugin SDK declarations", () => {
       "upload(args: ProjectAttachmentUploadArgs): Promise<ProjectAttachmentUploadResult>;",
     );
     expect(declarations).toContain(
-      "type EnvironmentStatusResult = EnvironmentStatusResponse;",
+      "type EnvironmentCommitResult = CommitActionResponse;",
     );
+    expect(declarations).not.toMatch(/from ['"]bb-git-contract/u);
     expect(declarations).toContain("interface PluginCatalogArea");
     expect(declarations).toContain("catalog: PluginCatalogArea;");
     expect(declarations).toContain("getSource(args: PluginGetSourceArgs)");
@@ -48,6 +49,7 @@ describe("bundled plugin SDK declarations", () => {
       "utf8",
     );
     expect(appDeclarations).not.toMatch(/from ['"]@bb\//u);
+    expect(appDeclarations).not.toMatch(/from ['"]bb-git-contract/u);
     expect(appDeclarations).toContain("useSdk(): PluginBrowserBbSdk;");
     expect(appDeclarations).toContain("interface ThreadSectionsArea");
     expect(appDeclarations).toContain("threadSections: ThreadSectionsArea;");

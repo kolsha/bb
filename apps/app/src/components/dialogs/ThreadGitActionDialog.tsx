@@ -3,9 +3,9 @@ import { DetailCard, DetailRow } from "@/components/ui/detail-card.js";
 import {
   SquashMergeInfo,
   type ThreadGitStatusDisplay,
-} from "@/components/workspace/workspace-status";
+} from "@bb/shared-ui/git-status-display";
 import { ChangedFilesDetailRow } from "@/components/workspace/ChangedFilesDetailRow";
-import type { WorkspaceChangedFilesSection } from "@/components/workspace/workspace-change-summary";
+import type { WorkspaceChangedFilesSection } from "@bb/shared-ui/workspace-change-summary";
 import { Button } from "@bb/shared-ui/button";
 import {
   Dialog,

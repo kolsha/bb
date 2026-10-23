@@ -12,9 +12,14 @@ import {
 } from "@/lib/plugin-slots";
 import { makePluginRegistrationSet } from "@/test/fixtures/plugins";
 import {
+  GIT_SEGMENT_FIXTURE_PLUGIN_ID,
+  GitSegmentFixtureProvider,
+  gitSegmentFixtureMergeBase,
+  type GitSegmentFixture,
+} from "@/test/fixtures/git-segment-plugin";
+import {
   ThreadPromptContextBanner,
   type CoreThreadContext,
-  type ThreadPromptGitSection,
 } from "./ThreadPromptContextBanner";
 
 const changedFile = {
@@ -24,8 +29,8 @@ const changedFile = {
   deletions: 0,
 };
 
-const git: ThreadPromptGitSection = {
-  changedFiles: {
+const git: GitSegmentFixture = {
+  section: {
     kind: "uncommitted",
     label: "Uncommitted",
     files: [changedFile],
@@ -38,8 +43,7 @@ const git: ThreadPromptGitSection = {
       files: [changedFile],
     },
   },
-  mergeBase: { branch: "main", options: ["main"], onChange: () => {} },
-  onPromptBannerFileClick: () => {},
+  mergeBase: gitSegmentFixtureMergeBase({ options: ["main"] }),
 };
 
 const parentThread = {
@@ -61,8 +65,6 @@ const childThreads = {
 };
 
 const EMPTY_CORE: CoreThreadContext = {
-  git: null,
-  gitPending: false,
   parentThread: null,
   childThreads: null,
 };
@@ -112,12 +114,14 @@ function registerPluginSegment({
 
 function renderBanner({
   core = EMPTY_CORE,
+  git = null,
   archived = false,
   showInlineSegments = true,
   expandedSegment = null,
   onToggleSegment = () => {},
 }: {
   core?: CoreThreadContext;
+  git?: GitSegmentFixture | null;
   archived?: boolean;
   showInlineSegments?: boolean;
   expandedSegment?: string | null;
@@ -125,6 +129,7 @@ function renderBanner({
 } = {}) {
   return render(
     <MemoryRouter>
+      <GitSegmentFixtureProvider value={git}>
       <ThreadPromptContextBanner
         input={{
           threadId: "thr_1",
@@ -138,6 +143,7 @@ function renderBanner({
         expandedSegment={expandedSegment}
         onToggleSegment={onToggleSegment}
       />
+      </GitSegmentFixtureProvider>
     </MemoryRouter>,
   );
 }
@@ -152,15 +158,16 @@ function rowText(): string {
 afterEach(() => {
   cleanup();
   removePluginSlotRegistrations("demo");
+  removePluginSlotRegistrations(GIT_SEGMENT_FIXTURE_PLUGIN_ID);
   resetAllCrashedPluginSlotsForTest();
   seenProps.length = 0;
   vi.restoreAllMocks();
 });
 
 describe("thread context segments", () => {
-  it("orders plugin segments between core segments and shares the visible list", () => {
+  it("orders core and plugin segments together and shares the visible list", () => {
     registerPluginSegment();
-    renderBanner({ core: { ...EMPTY_CORE, git, parentThread } });
+    renderBanner({ core: { ...EMPTY_CORE, parentThread }, git });
 
     const row = rowText();
     expect(row.indexOf("Plugin summary")).toBeGreaterThan(-1);
@@ -187,7 +194,7 @@ describe("thread context segments", () => {
 
   it("leaves a hidden segment out of the row and the shared list", () => {
     registerPluginSegment({ visible: false });
-    renderBanner({ core: { ...EMPTY_CORE, git } });
+    renderBanner({ git });
 
     expect(screen.queryByText(/Plugin summary/)).toBeNull();
     expect(screen.getByText("Merge base")).toBeTruthy();
@@ -197,7 +204,8 @@ describe("thread context segments", () => {
     registerPluginSegment();
     const onToggleSegment = vi.fn();
     const { unmount } = renderBanner({
-      core: { ...EMPTY_CORE, git },
+      core: EMPTY_CORE,
+      git,
       onToggleSegment,
     });
     screen.getByText(/Plugin summary/).click();
@@ -205,7 +213,8 @@ describe("thread context segments", () => {
     unmount();
 
     renderBanner({
-      core: { ...EMPTY_CORE, git },
+      core: EMPTY_CORE,
+      git,
       expandedSegment: "demo/status",
     });
     expect(screen.getByText("Plugin details")).toBeTruthy();
@@ -225,7 +234,7 @@ describe("thread context segments", () => {
         return props.part === "action" ? <span>Plugin action</span> : null;
       },
     });
-    renderBanner({ core: { ...EMPTY_CORE, git } });
+    renderBanner({ git });
 
     expect(screen.getByRole("button", { name: /Changed files/ })).toBeTruthy();
     expect(screen.getByText("Plugin action")).toBeTruthy();
@@ -249,7 +258,7 @@ describe("thread context segments", () => {
         ],
       }),
     );
-    renderBanner({ core: { ...EMPTY_CORE, git } });
+    renderBanner({ git });
 
     expect(screen.queryByText(/Plugin summary/)).toBeNull();
     expect(screen.getByText("Merge base")).toBeTruthy();
@@ -266,7 +275,8 @@ describe("thread context segments", () => {
   it("shows only before cards beside a pending question", () => {
     registerPluginSegment({ placement: "before" });
     renderBanner({
-      core: { ...EMPTY_CORE, childThreads, git },
+      core: { ...EMPTY_CORE, childThreads },
+      git,
       showInlineSegments: false,
     });
 
@@ -277,10 +287,11 @@ describe("thread context segments", () => {
     ).toBeNull();
   });
 
-  it("withholds the inline row while core git status loads", () => {
+  it("withholds the inline row while a segment is pending", () => {
     registerPluginSegment();
     renderBanner({
-      core: { ...EMPTY_CORE, childThreads, parentThread, gitPending: true },
+      core: { ...EMPTY_CORE, childThreads, parentThread },
+      git: "pending",
     });
 
     expect(screen.getByRole("region", { name: "Child threads" })).toBeTruthy();

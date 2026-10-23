@@ -180,6 +180,14 @@ shares its validation and per-plugin id namespace.
 
 Docs: `frontend-renderer-slots.md`.
 
+`experimental_inactiveInInputs: true` (SDK 0.6.77) keeps a command's shortcut
+from firing while a text field, terminal or browser tab has focus: its binding
+gets the `editableFocus`, `terminalFocus` and `browserFocus` exclusions core's
+own bindings use. The Git plugin's `toggle-diff` (default `Mod+D`) uses it,
+replacing core's `diff.toggle`; saved `diff.toggle` overrides become
+`plugin:bb--git/toggle-diff` when read (`appKeybindingOverridesSchema`).
+`PluginCommandContext.experimental_toggleTab` is described under Unified tabs.
+
 Audit command identity, availability outside the palette, shortcut conflicts,
 and saved binding lifecycle before stabilizing the keyboard shortcut
 contract. Audit cross-platform conflicts and plugin lifecycle before
@@ -1021,6 +1029,16 @@ Docs: `backend-foundation.md`.
 connect URL should supply this value when `BB_APP_URL` is empty. Confirm that
 one public URL has clear behavior when a server has several access paths.
 
+## `internal_DO_NOT_USE_execPortableFile`, `internal_DO_NOT_USE_spawnManagedProcess`, `internal_DO_NOT_USE_withVcsProcessPriority` (`@get-bb/plugin-sdk/host`)
+
+Internal to bb's own Git plugin: the `internal_DO_NOT_USE_` prefix marks members that are not part of the plugin API, are not offered to third-party plugins, and may change or disappear in any release.
+
+They are `@bb/process-utils`' `execPortableFile`, `spawnManagedProcess` and `withVcsProcessPriority`, the process primitives the daemon's git reads use: buffered runs with a byte cap and optional truncated stdout, and streamed runs that stop after a record limit. Plugin host bundles may not import private `@bb/*` packages, so `bb-git-host` (`packages/git-host`), the git read and branch-option code shared by the daemon (`@bb/host-workspace`, `apps/host-daemon`) and the Git plugin host (`plugins/git/host`), reaches them through the SDK host entry together with `experimental_runVcsProcess` and `experimental_sanitizeInheritedChildProcessEnv`.
+
+Core callers: `bb-git-host` uses the first two; the Git plugin host runs its diff, file and branch reads at interactive VCS priority with the third, as the daemon's handlers did.
+
+**Audit before stabilizing.** Decide whether `bb-environment-provider-host/git` and `bb-git-host` merge into one host-safe git runner, which would retire these exports or make one runner public.
+
 ## `bb.server.internal_DO_NOT_USE_openTunnelIngress`
 
 Internal to bb's own connect plugins (`connect`, `bb--connect-next`): the `internal_DO_NOT_USE_` prefix marks members that are not part of the plugin API, are not offered to third-party plugins, and may change or disappear in any release.
@@ -1233,7 +1251,10 @@ fires after a final unterminated line is emitted.
 
 `experimental_FileLink` and `experimental_openFilePreview` open explicit live
 workspace, host and thread-storage file targets through the current surface's
-shared file-tab controller. `experimental_openFileExternally` opens a target
+shared file-tab controller. `ExperimentalFileOpenOptions.experimental_deleted`
+(SDK 0.6.77) opens a workspace file that no longer exists from git:
+`{ from: "head" }` or `{ from: "merge-base", ref }`. Core's changed-files rows
+used this path; the Git plugin's Info and composer rows call it now. `experimental_openFileExternally` opens a target
 in the client's preferred external app. The boolean results report host
 acceptance, and malformed targets stay inert.
 
@@ -1374,6 +1395,32 @@ Docs: `backend-foundation.md`, `testing.md`.
     size limits without pretending to model process startup, crashes, native
     watcher recovery, or reconnect behavior.
 
+## `PluginRpcMethodContract.experimental_retryable` (host contracts)
+
+A host contract method can declare `experimental_retryable: true`. When the
+daemon's response to such a call has not arrived within half of its transport
+timeout, the server cancels that call and sends it once more with a new call
+id. This is core's own retry: `callPluginHostRpc` goes through
+`callHostRetryablePluginHostCall`, which runs the same
+`callHostOnlineRpcWithRetry` path core uses for daemon commands marked
+`retryable: true` in `hostDaemonCommandRegistry`, and differs only in giving
+the second attempt a fresh `callId`, because the daemon rejects a duplicate id
+while the first call is pending. No daemon wire change. Client RPC
+registrations ignore the field.
+
+Callers: the Git plugin's `status`, `diff`, `files`, `patches`, `fileSide`
+and `branches` (base marked `workspace.status`, `workspace.diff`,
+`workspace.diffFiles`, `workspace.diffPatch`, `host.read_file` and
+`host.list_branch_options` retryable), and the GitHub PR Status plugin's
+`view` (core marked `workspace.pull_request` retryable; `act` is not).
+
+Docs: `backend-foundation.md`.
+
+**Audit before stabilizing.** Decide whether retryability belongs on the
+contract or should be inferred from a read/write method kind, whether one
+retry is enough for plugin calls with long timeouts, and whether the
+cancelled first attempt should count against worker lifetime.
+
 ## Fixed-tab targets (`experimental_target`, `experimental_useAppPanel`, and `experimental_useFixedTabTarget`)
 
 **Kept experimental.** Fixed tabs now register through `experimental_tab`; the
@@ -1385,7 +1432,11 @@ A fixed tab's `experimental_target` validator owns a JSON-safe target type.
 on the current surface and can submit a target.
 `experimental_useFixedTabTarget()` returns the validated current-session
 target with a sequence and `clear()`. Targets are memory-only: they survive
-remounts but not a refresh.
+remounts but not a refresh. Thread fixed tabs accept targets too
+(`ExperimentalThreadFixedTabProps`, SDK 0.6.77): the Git plugin's Diff tab
+validates `{ kind: "file", path }` or `{ kind: "commit", sha }`, its Info rows
+and composer segment open it through `experimental_openTab`, and core's
+timeline "Open diff" title action uses the same call.
 
 Docs: `frontend-core-slots.md`, `frontend-components.md`.
 
@@ -2346,9 +2397,11 @@ loader callback.
    highlighting worker pool; homepage and settings sections do not, so a diff
    rendered there is unhighlighted. Decide whether the host should provide the
    pool at the component instead of the surface.
-5. **Selection to chat.** bb's own surfaces pass a selection-to-composer
-   handler that the public component withholds. Confirm plugins should reach
-   that through `useComposer()` rather than a renderer prop.
+5. **Selection to chat.** `experimental_addSelectionToChat` (SDK 0.6.77)
+   turns on bb's own "Add to chat" for selected diff lines; the host wires it
+   to the thread's composer, the way core's Diff tab did. The Git plugin's
+   Diff tab is the caller. Confirm a boolean is enough, or whether plugins
+   need to shape the inserted text.
 6. **Size and virtualization.** Neither component caps input size or
    virtualizes. Audit against a plugin that renders a very large file or patch.
 
@@ -2544,19 +2597,27 @@ blocks: `experimental_InfoSection` (heading, count pill, collapse),
 `experimental_InfoList` (the "N more" list), and `experimental_InfoListRow`.
 Inside a section slot, `experimental_InfoSection` collapses, and the state is
 stored in the `infoPanel.collapsedSections` preference under the core id or
-`<pluginId>/<id>`.
+`<pluginId>/<id>`. SDK 0.6.77 adds what core's Commits and Uncommitted files
+sections drew with, so the Git plugin draws them unchanged:
+`experimental_InfoList`'s `rail` (a timeline rail through the leading icons),
+`experimental_InfoListRow`'s `actions` (hover icon buttons, `{ icon, label,
+onSelect }`), `experimental_InfoRowTime` (relative time with a detail
+tooltip) and `experimental_InfoSubheading` (a label, count and trailing node
+inside a section).
 
 **Core callers.** `ThreadMetadataContent` renders the Info tab only through
 `ThreadInfoRows` and `ThreadInfoSections`
 (`apps/app/src/components/secondary-panel/info/ThreadInfoSlots.tsx`), which
 merge `CORE_THREAD_INFO_ROWS` and `CORE_THREAD_INFO_SECTIONS` with plugin
 registrations. `experimental_DetailRow` is bb's only label/value row
-(`DetailRow` in `apps/app/src/components/ui/detail-card.tsx`): all ten core
-rows and the commit dialog draw with it, and core's five sections draw with
+(`DetailRow` in `apps/app/src/components/ui/detail-card.tsx`): core's rows
+and the commit dialog draw with it, and core's sections draw with
 `InfoSection` and `InfoList`. The
-Automations plugin registers the Automations section, and the GitHub PR Status
+Automations plugin registers the Automations section, the GitHub PR Status
 plugin registers the Pull request row in the `pullRequest` group, reading its
-pull request through `environment`. Contract tests:
+pull request through `environment`, and the Git plugin registers the branch,
+merge base and git status rows in the `git` group and the Commits and
+Uncommitted files sections in the `changes` group. Contract tests:
 `ThreadInfoSlots.test.tsx`.
 
 Docs: `frontend-registration.md`, `frontend-components.md`.
@@ -2916,9 +2977,9 @@ returns for every file: `<oldMode>:<oldBlob>:<newMode>:<newBlob>` from
 counts as Viewed only while the stored revision equals the current one.
 `diffFiles` and `diffPatch` also accept `ignoreWhitespace` (git `-w`).
 
-Core callers: the workspace diff panel's Viewed checkbox
-(`DiffFilesPanel` through `useSetDiffFileViewed` and
-`useEnvironmentDiffViewed`) and `bb environment diff-viewed list|mark|unmark|clear`.
+Callers: the bundled Git plugin (`plugins/git/server/viewed.ts`), which serves
+the Diff tab's Viewed checkbox and `bb git viewed list|mark|unmark|clear`
+through its `viewed`, `markViewed` and `clearViewed` RPCs.
 
 **Audit before stabilizing.**
 
@@ -3547,19 +3608,23 @@ Stabilize after exercising producer cancellation, reload, reconnect and byte lim
 
 `experimental_useSidebarThreadPullRequest(threadId)` and its `PluginSidebarPullRequest` and `PluginSidebarThreadPullRequestState` types are gone from `@get-bb/plugin-sdk/app`, the Plugin Guide and the authoring docs. Published bundles resolve `@get-bb/plugin-sdk/app` exports by name on `globalThis.__bbPluginRuntime.pluginSdkApp`, so the app installs `retiredPluginSdkAppMembers` (`apps/app/src/lib/plugin-sdk-app-impl.tsx`) next to the implementation. The member keeps its old shape, reads the GitHub PR Status plugin's `pullRequests` row for the thread's environment through `useRetiredSidebarEnvironmentPullRequest` (`apps/app/src/lib/retired-sidebar-pull-request.ts`), main's hook kept for it: a cached row refetches on mount and a stale row on page show. It returns `{ isLoading: false, pullRequest: null }` when the plugin is disabled or the read fails. The GitHub PR Status plugin's own segment and Info row use the plugin's copy of that hook. Both copies announce each refetch they start with `PULL_REQUESTS_REFETCH_EVENT` on `window` and recheck staleness before a page-show refetch, so a row shown by both is read once. The name leaves only the typings. `bb-plugin-build` keeps it in the `@get-bb/plugin-sdk/app` runtime shim's export list (`RETIRED_PLUGIN_SDK_APP_EXPORTS` in `packages/plugin-build/src/build-plugin-app.ts`), so plugins that still import it build and run, because git-sourced marketplace plugins are built by bb at install and update and path and builtin plugins rebuild when the SDK version changes. An import of it is a build warning carrying the replacement call: `bb plugin build` and `bb plugin dev` print it, and the server writes it to the plugin's log and the server log when it builds the plugin. Callers are marketplace plugins written against the old SDK (t3sidebar, dockside, gtd-sidebar, thread-inbox, radar-sidebar, bb-sidebar, sidebar-plus, cursor-sidebar, switchboard, vantage, jb-flow, tinted-threads among them). Remove the runtime member and the shim entry only after those plugins have migrated.
 
+## Retired environment git reads (`bb.sdk.environments.status`, `diff`, `diffFiles`, `diffPatch`, `diffFile`, `diffBranches`)
+
+These six `PluginBbSdk.environments` methods are gone from the public typings, the Plugin Guide and the authoring docs; the Git plugin's RPC contract (`bb--git`: `status`, `diff`, `files`, `patches`, `fileSide`, `branches`) replaces them, and core's HTTP read routes are deleted. Published and git-sourced plugins keep working: `packages/sdk/src/areas/retired-environment-reads.ts` adds runtime adapters with the old shapes that call `POST /api/v1/plugins/bb--git/rpc/<method>`, so they fail with the RPC error when the Git plugin is disabled. `bb-plugin-build` scans app and server bundles for calls to them (`packages/plugin-build/src/retired-sdk-members.ts`) and prints a warning with the replacement RPC call; `bb plugin build`, `bb plugin dev` and server-side builds at install and update log it, and never fail. Callers are marketplace plugins written against the old SDK (vantage, diff-tree, firstmate, diff-viewed among them). Remove the adapters after those plugins migrate.
+
 ## Unified tabs (`experimental_tab`)
 
-- **Surface:** `app.slots.experimental_tab`, `ExperimentalTabRegistration`, `ExperimentalTabContext`, `ExperimentalTabReference`, `ExperimentalTabTargetReference`, `ExperimentalThreadActionTabProps`, `ExperimentalThreadTabActionContext`, and `ExperimentalAppPanel.experimental_openTab`. Context is thread (`threadId`) or an owned navigation panel (`panelId`, component `subPath`). Availability is fixed or action. Only actions accept `run`, default `params` and per-open persisted params/title; navigation-page fixed tabs retain validated session targets. `tooltip` defaults to title and layout is padded or flush.
+- **Surface:** `app.slots.experimental_tab`, `ExperimentalTabRegistration`, `ExperimentalTabContext`, `ExperimentalTabReference`, `ExperimentalTabTargetReference`, `ExperimentalThreadActionTabProps`, `ExperimentalThreadFixedTabProps`, `ExperimentalThreadTabActionContext`, `ExperimentalAppPanel.experimental_openTab` and `PluginCommandContext.experimental_toggleTab`. Thread fixed tabs receive `{ threadId, environment, isOpen }` (`environment` as in thread Info; `isOpen` is false while the side panel is closed and the active tab stays mounted, so the Diff tab pauses its file, Viewed, patch and branch reads the way core's `isDiffPanelLive` did), and both their component and `useVisible` see it; they accept `experimental_target` and `experimental_shortcutCommandId` (a command of the same plugin whose shortcut the tab strip shows). `experimental_toggleTab(reference)` opens a thread fixed tab of the calling plugin, or closes the secondary panel when that tab is already showing, the way core's old Diff toggle did. Context is thread (`threadId`) or an owned navigation panel (`panelId`, component `subPath`). Availability is fixed or action. Only actions accept `run`, default `params` and per-open persisted params/title; navigation-page fixed tabs retain validated session targets. `tooltip` defaults to title and layout is padded or flush.
 - **Behavior:** one registry and destination dispatcher serve thread fixed, thread action, navigation-page fixed and navigation-page action tabs. `useVisible` runs inside plugin scope/crash isolation for the current context. It hides a destination or launcher without removing saved fixed identity/order or already-open action instances. Action params deduplicate instances; fixed tabs have one identity and cannot close. Existing `openFixedTab`, action `openPanel`, message-action openers and `openThreadPanel` delegate through the shared dispatcher. New-thread-screen actions retain their project-context API and use the same action-opening implementation.
 - **Compatibility:** `threadPanelAction`, `PluginThreadPanelActionRegistration`, `PluginThreadPanelProps`, `PluginThreadPanelActionContext`, `navPanel.fixedTabs`, `PluginFixedTabRegistration` and `PluginFixedTabDeclaration` are removed from public source typings by explicit product decision. Runtime adapters in the registration collector remain for published bundles and Git-source install/update builds: 92 marketplace repositories use `threadPanelAction`, 15 use `fixedTabs`. Legacy optional icons, unknown fields and older fixed-tab owner shapes are accepted; malformed entries warn/skip rather than crashing the plugin. `bb-plugin-build` emits migration warnings with replacement examples and the authoring migration link. Server install/rebuild paths copy warnings into the plugin log; warnings never block install or update. The runtime export manifest continues to expose existing SDK functions. Remove adapters only after known callers have migrated.
 - **Persistence and automation:** thread fixed entries use `{id, kind: 'plugin-fixed', pluginId, tabId}` through SDK `threads.tabs.get/update` and CLI `bb thread tabs show/set`, with revision checks. Existing `plugin-page-fixed` and `plugin-panel` action entries/params keep their IDs and storage keys. Selection is client-local. Legacy core Info/Diff kinds, active selections and split IDs convert without reordering; server entries rewrite through the revision-checked queue. Split restoration waits for registration/visibility readiness.
-- **Core callers:** Info and Diff register as thread + fixed and use the shared content host, visibility, descriptor and open paths. Diff retains shortcut, Git setting, file/commit navigation and review state. Core-only Info metadata and Diff controllers remain pane-owned contexts; they are not public plugin API. Docs, GitHub, Side Chat, Tasks, Workflows and the ThreadChat demo use the unified registration.
+- **Core callers:** Info registers as thread + fixed and uses the shared content host, visibility, descriptor and open paths. The bundled Git plugin (`bb--git`) registers Diff the same way, with its `toggle-diff` command (default `Mod+D`) as `experimental_shortcutCommandId`, a file/commit target, and `useVisible` on `environment`; core's palette, keyboard shortcut and timeline title action reach it through `experimental_toggleTab` and `experimental_openTab`. Core-only Info metadata and Diff controllers remain pane-owned contexts; they are not public plugin API. Docs, GitHub, Side Chat, Tasks, Workflows and the ThreadChat demo use the unified registration.
 - **Stabilization:** audit context typing, targets versus persisted inputs, visibility and crash/reload lifecycles, independent panes/threads, startup split restoration, revision conflicts and compact drawers. Keep the shared contract table across contexts and legacy adapters, verify actual published plugin installs, then rename project-wide and remove this entry.
 
 ## Thread context segments (`app.slots.experimental_threadContextSegment`)
 
-- **Surface:** `PluginAppSlots.experimental_threadContextSegment`, `ExperimentalThreadContextSegmentRegistration`, `ExperimentalThreadContextSegmentProps`, `ExperimentalThreadContextSegmentInput`, `ExperimentalThreadContextSegmentReference` and `ExperimentalThreadEnvironment` (also used by `ExperimentalThreadInfoProps.environment`).
-- **Behavior:** a registration is `{ id, title, placement?, order?, component, useVisible? }`. `inline` (default) segments share the context row above an existing thread's composer; the host mounts the component once per part, each in its own crash boundary: `summary` in the row (wrapped in a group named by `title`), `action` at the row's end after every summary, and `details` below the row. `before` registrations stack a card above that row and receive only `summary`. Segments sort by `order` (unset last), then registration order, core first on a tie; core's parent thread is 100 and changed files 300. `useVisible(input)` runs in plugin scope per thread; false, or a crash, leaves the segment out of the row and of `segments`. Props carry `threadId`, `projectId`, `environment`, the visible inline `segments` in row order, and the shared disclosure state: one segment of a banner is expanded at a time, keyed `<pluginId>/<id>`. `environment` is `{ id }`, or null when the thread has no environment, its host is not active, the environment is not a usable checkout, or the user turned off "Show Git changes and Commit button". The row is withheld while core's workspace status loads, only `before` cards show beside a pending question, and read-only history (archived thread or gone environment) shows core's parent thread only. The banner renders under every composer plugin, because the host draws it above `ComposerBox`.
-- **Core callers:** `ThreadPromptContextBanner` (`apps/app/src/components/promptbox/banner/ThreadPromptContextBanner.tsx`) registers the parent thread (summary and details, including read-only history), changed files (summary, merge-base action, details) and active child threads (`before`) through `definePluginApp` and the same collector, and renders them with plugin registrations through `useThreadContextSegments` and `ThreadContextSegmentMount` (`apps/app/src/components/plugin/PluginThreadContextSegments.tsx`). Core segments read pane-local data from a React context and render without a plugin crash boundary, as core Info rows do. The GitHub PR Status plugin registers the pull request segment (order 200) and its Mark ready and merge actions. Contract tests: `ThreadPromptContextBanner.segments.test.tsx`.
-- **Known coupling:** `environment` folds in the "Show Git changes and Commit button" setting so the pull request segment hides with core's changed files, as before; that setting should become the git plugin's own when changed files move out of core.
+- **Surface:** `PluginAppSlots.experimental_threadContextSegment`, `ExperimentalThreadContextSegmentRegistration`, `ExperimentalThreadContextSegmentProps`, `ExperimentalThreadContextSegmentInput`, `ExperimentalThreadContextSegmentReference`, `ExperimentalThreadContextSegmentVisibility` and `ExperimentalThreadEnvironment` (also used by `ExperimentalThreadInfoProps.environment`).
+- **Behavior:** a registration is `{ id, title, placement?, order?, component, useVisible? }`. `inline` (default) segments share the context row above an existing thread's composer; the host mounts the component once per part, each in its own crash boundary: `summary` in the row (wrapped in a group named by `title`), `action` at the row's end after every summary, and `details` below the row. `before` registrations stack a card above that row and receive only `summary`. Segments sort by `order` (unset last), then registration order, core first on a tie; core's parent thread is 100 and the Git plugin's changed files 300. `useVisible(input)` runs in plugin scope per thread and returns `true`, `false` or `"pending"`; false, pending, or a crash leaves the segment out of the row and of `segments`, and while any inline segment is pending the whole inline row is withheld so segments do not shift in one by one. Props carry `threadId`, `projectId`, `environment`, the visible inline `segments` in row order, and the shared disclosure state: one segment of a banner is expanded at a time, keyed `<pluginId>/<id>`. `environment` is `{ id }`, or null when the thread has no environment, its host is not active, the environment is not a usable checkout, or the user turned off "Show Git changes and Commit button". Only `before` cards show beside a pending question, and read-only history (archived thread or gone environment) shows core's parent thread only. The banner renders under every composer plugin, because the host draws it above `ComposerBox`.
+- **Core callers:** `ThreadPromptContextBanner` (`apps/app/src/components/promptbox/banner/ThreadPromptContextBanner.tsx`) registers the parent thread (summary and details, including read-only history) and active child threads (`before`) through `definePluginApp` and the same collector, and renders them with plugin registrations through `useThreadContextSegments` and `ThreadContextSegmentMount` (`apps/app/src/components/plugin/PluginThreadContextSegments.tsx`). Core segments read pane-local data from a React context and render without a plugin crash boundary, as core Info rows do. The Git plugin registers changed files (summary, merge-base action, details; `pending` until its first status read) and the GitHub PR Status plugin the pull request segment (order 200) and its Mark ready and merge actions. Contract tests: `ThreadPromptContextBanner.segments.test.tsx`.
+- **Known coupling:** `environment` folds in the "Show Git changes and Commit button" setting so the pull request segment hides with the Git plugin's changed files, as before. The setting also gates core's Commit button, so it stays in core until commit moves into the Git plugin.
 - **Stabilization:** audit part mounts and crash recovery across reloads and plugin disable, `segments` stability while visibility settles, focus handoff between a plugin's summary and details, independent panes, and compact widths with several plugin segments. Then rename project-wide and remove this entry.

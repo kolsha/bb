@@ -1,5 +1,7 @@
 import type { JsonValue } from "@bb/domain";
-import { threadSchema, type GitSourceInspection } from "@bb/domain";
+import {
+  threadSchema,
+} from "@bb/domain";
 import type { HostDaemonRpcCommand } from "@bb/host-daemon-contract";
 import { threadResponseSchema } from "@bb/server-contract";
 import { describe, expect, it, vi } from "vitest";
@@ -16,6 +18,9 @@ import {
 } from "../helpers/seed.js";
 import { withTestHarness, type TestAppHarness } from "../helpers/test-app.js";
 import { installFakeGitWorktreeProvider } from "../helpers/environment-provider.js";
+import type {
+  GitSourceInspection,
+} from "bb-git-contract";
 
 const SOURCE_PATH = "/tmp/named-base-branch-source";
 

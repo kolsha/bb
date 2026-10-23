@@ -4,7 +4,6 @@ import {
 } from "../helpers/environment-provider.js";
 import {
   PERSONAL_PROJECT_ID,
-  type GitSourceInspection,
   type ProjectExecutionDefaults,
   type Thread,
 } from "@bb/domain";
@@ -29,6 +28,9 @@ import {
   seedProjectWithSource,
 } from "../helpers/seed.js";
 import { withTestHarness } from "../helpers/test-app.js";
+import type {
+  GitSourceInspection,
+} from "bb-git-contract";
 
 const registry = await createTestProviderRegistry();
 

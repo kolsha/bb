@@ -25,6 +25,8 @@
     "@bb/connect-client": "workspace:*",
     "@bb/config": "workspace:*",
     "@bb/domain": "workspace:*",
+    "bb-git-contract": "workspace:*",
+    "bb-git-host": "workspace:*",
     "@bb/frp-client": "workspace:*",
     "@bb/fuzzy-match": "workspace:*",
     "@bb/host-daemon-contract": "workspace:*",

@@ -441,7 +441,10 @@ export class BbRealtimeClient implements BbRealtime {
       }, reconnectDelayMs);
     };
 
+    let closeRequested = false;
     socket.onerror = () => {
+      if (closeRequested) return;
+      closeRequested = true;
       socket.close();
     };
 

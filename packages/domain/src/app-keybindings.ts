@@ -76,7 +76,6 @@ export const APP_COMMAND_IDS = [
   "panel.toggle",
   "panel.fullScreen.toggle",
   "file.quickOpen",
-  "diff.toggle",
   "terminal.open",
   "composer.focus",
   "modelPicker.toggle",
@@ -320,23 +319,54 @@ const appKeybindingOverrideSchema = z
   })
   .strict();
 
-export const appKeybindingOverridesSchema = z
-  .array(appKeybindingOverrideSchema)
-  .max(1024)
-  .superRefine((overrides, context) => {
-    const seen = new Set<string>();
-    for (const [index, override] of overrides.entries()) {
-      const key = `${override.command}:${override.platform ?? "all"}`;
-      if (seen.has(key)) {
-        context.addIssue({
-          code: "custom",
-          message: `Duplicate override for ${override.command}`,
-          path: [index, "command"],
-        });
-      }
-      seen.add(key);
-    }
+const RETIRED_KEYBOARD_COMMAND_IDS: ReadonlyMap<string, PluginCommandId> =
+  new Map([["diff.toggle", "plugin:bb--git/toggle-diff"]]);
+
+function overrideSlot(entry: unknown): string | null {
+  if (typeof entry !== "object" || entry === null) return null;
+  const command: unknown = Reflect.get(entry, "command");
+  const platform: unknown = Reflect.get(entry, "platform");
+  return typeof command === "string"
+    ? `${command}:${typeof platform === "string" ? platform : "all"}`
+    : null;
+}
+
+function migrateRetiredKeyboardCommands(value: unknown): unknown {
+  if (!Array.isArray(value)) return value;
+  const explicitSlots = new Set(value.map(overrideSlot));
+  return value.flatMap((entry: unknown) => {
+    if (typeof entry !== "object" || entry === null) return [entry];
+    const command: unknown = Reflect.get(entry, "command");
+    const replacement =
+      typeof command === "string"
+        ? RETIRED_KEYBOARD_COMMAND_IDS.get(command)
+        : undefined;
+    if (replacement === undefined) return [entry];
+    const migrated = { ...entry, command: replacement };
+    return explicitSlots.has(overrideSlot(migrated)) ? [] : [migrated];
   });
+}
+
+export const appKeybindingOverridesSchema = z.preprocess(
+  migrateRetiredKeyboardCommands,
+  z
+    .array(appKeybindingOverrideSchema)
+    .max(1024)
+    .superRefine((overrides, context) => {
+      const seen = new Set<string>();
+      for (const [index, override] of overrides.entries()) {
+        const key = `${override.command}:${override.platform ?? "all"}`;
+        if (seen.has(key)) {
+          context.addIssue({
+            code: "custom",
+            message: `Duplicate override for ${override.command}`,
+            path: [index, "command"],
+          });
+        }
+        seen.add(key);
+      }
+    }),
+);
 export type AppKeybindingOverrides = z.infer<
   typeof appKeybindingOverridesSchema
 >;

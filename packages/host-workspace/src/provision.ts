@@ -1,16 +1,9 @@
-import type { ProvisioningTranscriptEntry, WorkspaceStatus } from "@bb/domain";
+import type { ProvisioningTranscriptEntry } from "@bb/domain";
 import { pathExists } from "@bb/process-utils";
 import type {
   CommitOptions,
   LocalStateSnapshot,
   CommitResult,
-  DiffOptions,
-  DiffResult,
-  DiffFilesArgs,
-  DiffFilesResult,
-  DiffPatchArgs,
-  DiffPatchEntry,
-  StatusOptions,
 } from "./workspace.js";
 import { Workspace } from "./workspace.js";
 import {
@@ -19,7 +12,7 @@ import {
   WorkspaceError,
   type SharedGitRefsSnapshot,
   type GitProcessOptions,
-} from "./git.js";
+} from "bb-git-host/git";
 import { resolveAdditionalWorkspaceWriteRoots } from "./workspace-write-roots.js";
 
 type ProvisionProgressCallback = (entry: ProvisioningTranscriptEntry) => void;
@@ -63,11 +56,6 @@ export interface HostWorkspace {
   getLocalStateSnapshot(): Promise<LocalStateSnapshot>;
   getSharedGitRefsSnapshot(): Promise<SharedGitRefsSnapshot>;
   getAdditionalWorkspaceWriteRoots(): Promise<string[]>;
-  getStatus(options?: StatusOptions): Promise<WorkspaceStatus>;
-  getDiff(options?: DiffOptions): Promise<DiffResult>;
-  diffFiles(args: DiffFilesArgs): Promise<DiffFilesResult>;
-  diffPatch(args: DiffPatchArgs): Promise<DiffPatchEntry[]>;
-
   commit(options: CommitOptions): Promise<CommitResult>;
 }
 
@@ -130,22 +118,6 @@ class ProvisionedHostWorkspace implements HostWorkspace {
       this.path,
       this.gitProcessOptions,
     );
-  }
-
-  getStatus(options?: StatusOptions): Promise<WorkspaceStatus> {
-    return this.ws.getStatus(options);
-  }
-
-  getDiff(options?: DiffOptions): Promise<DiffResult> {
-    return this.ws.getDiff(options);
-  }
-
-  diffFiles(args: DiffFilesArgs): Promise<DiffFilesResult> {
-    return this.ws.diffFiles(args);
-  }
-
-  diffPatch(args: DiffPatchArgs): Promise<DiffPatchEntry[]> {
-    return this.ws.diffPatch(args);
   }
 
   commit(options: CommitOptions): Promise<CommitResult> {

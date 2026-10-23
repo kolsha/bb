@@ -29,7 +29,6 @@ import type {
 } from "@bb/host-watcher";
 import {
   provisionWorkspace,
-  WorkspaceError,
   type HostWorkspace,
   type ProvisionWorkspaceArgs,
 } from "@bb/host-workspace";
@@ -48,6 +47,9 @@ import type { FetchSkillTree } from "./skill-trees.js";
 import { userExecutableProcessOptions } from "./user-executable-env.js";
 import { runSetupScript } from "./environment-lifecycle-script.js";
 import { runInSerialLane } from "./serial-lane.js";
+import {
+  WorkspaceError,
+} from "bb-git-host/git";
 
 type StopWatching = () => void | Promise<void>;
 

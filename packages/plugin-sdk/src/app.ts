@@ -160,6 +160,12 @@ export const experimental_InfoList = runtimeComponent("experimental_InfoList");
 export const experimental_InfoListRow = runtimeComponent(
   "experimental_InfoListRow",
 );
+export const experimental_InfoRowTime = runtimeComponent(
+  "experimental_InfoRowTime",
+);
+export const experimental_InfoSubheading = runtimeComponent(
+  "experimental_InfoSubheading",
+);
 export const experimental_useRpcQuery = runtimeFunction(
   "experimental_useRpcQuery",
 );

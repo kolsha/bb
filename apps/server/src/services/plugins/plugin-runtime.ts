@@ -1147,7 +1147,13 @@ export function createPluginRuntime(context: PluginRuntimeContext) {
           },
         }),
       );
-      return { ...built, loader: "cjs" };
+      logPluginBuildWarnings({
+        dataDir: deps.dataDir,
+        logger,
+        pluginId: row.id,
+        warnings: built.warnings,
+      });
+      return { path: built.path, digest: built.digest, loader: "cjs" };
     }
     if (row.sourceKind === "path") return buildSource();
     if (

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@bb/domain": "workspace:*",
+    "bb-git-contract": "workspace:*",
     "@bb/host-daemon-contract": "workspace:*",
     "@bb/hono-typed-routes": "workspace:*",
     "@bb/provider-bridge-protocol": "workspace:*",

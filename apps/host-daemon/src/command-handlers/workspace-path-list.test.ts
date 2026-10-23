@@ -2,10 +2,12 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runGit } from "@bb/host-workspace";
 import { initRepo } from "@bb/test-helpers";
 import { listWorkspacePaths } from "./file-list.js";
 import { listHostPaths } from "./host-files.js";
+import {
+  runGit,
+} from "bb-git-host/git";
 
 const roots: string[] = [];
 const largeTreeTimeoutMs = process.platform === "win32" ? 240_000 : 60_000;

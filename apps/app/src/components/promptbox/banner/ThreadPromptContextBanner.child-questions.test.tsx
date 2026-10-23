@@ -121,8 +121,6 @@ function Harness({
     <ThreadPromptContextBanner
       input={{ threadId: "thr_parent", projectId: "proj_1", environment: null }}
       core={{
-        git: null,
-        gitPending: false,
         parentThread: null,
         childThreads,
       }}

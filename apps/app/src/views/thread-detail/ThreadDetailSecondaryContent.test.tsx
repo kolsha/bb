@@ -36,6 +36,7 @@ const secondaryPanelMockState = vi.hoisted(() => ({
         activeBrowserTabId: string,
         pane: {
           isFocused: boolean;
+          isOpen: boolean;
           onFocusPane: () => void;
         },
       ) => ReactNode)
@@ -278,7 +279,6 @@ function createProps(
     renderHostedPanel: (panel) => panel,
     secondaryPanel: {
       activeTab: null,
-      canUseGitUi: false,
       tabs: [],
       fixedTabs: [],
       isOpen: true,
@@ -457,6 +457,7 @@ describe("ThreadDetailSecondaryContent", () => {
     const onFocusPane = vi.fn();
     panelBrowserDeck("browser-split", {
       isFocused: true,
+      isOpen: true,
       onFocusPane,
     });
     expect(renderBrowserDeck).toHaveBeenLastCalledWith({
@@ -468,6 +469,7 @@ describe("ThreadDetailSecondaryContent", () => {
 
     panelBrowserDeck("browser-split", {
       isFocused: false,
+      isOpen: true,
       onFocusPane,
     });
     expect(renderBrowserDeck).toHaveBeenLastCalledWith({

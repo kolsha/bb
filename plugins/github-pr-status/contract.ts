@@ -286,6 +286,7 @@ const hostPullRequestActionResultSchema = z.discriminatedUnion("ok", [
 
 export const githubPrStatusHostContract = defineRpcContract({
   view: {
+    experimental_retryable: true,
     input: z.object({ path: z.string().min(1) }).strict(),
     output: hostPullRequestLookupSchema,
   },

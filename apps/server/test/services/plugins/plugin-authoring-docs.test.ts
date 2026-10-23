@@ -47,6 +47,7 @@ import {
   type PluginSidebarFooterActionRegistration,
   type PluginThreadEventPayloads,
   type ExperimentalThreadActionTabProps,
+  type ExperimentalThreadFixedTabProps,
   type ThreadChatMessageAction,
   type ThreadChatProps,
 } from "@get-bb/plugin-sdk";
@@ -157,7 +158,11 @@ const PUBLIC_PLUGIN_SDK_EXPORT_NAMES = [
       join(REPO_ROOT, "packages/plugin-sdk/bundled-types", filename),
       "utf8",
     ),
-  ).filter((name) => !name.startsWith("InternalDoNotUse")),
+  ).filter(
+    (name) =>
+      !name.startsWith("InternalDoNotUse") &&
+      !name.startsWith("internal_DO_NOT_USE_"),
+  ),
 );
 
 const BB_PLUGIN_API_KEYS = [
@@ -274,7 +279,10 @@ type SlotPropsByName = {
   settingsSection: PluginSettingsSectionProps;
   experimental_appOverlay: ExperimentalAppOverlayProps;
   navPanel: PluginNavPanelProps;
-  experimental_tab: ExperimentalThreadActionTabProps | PluginNavPanelProps;
+  experimental_tab:
+    | ExperimentalThreadActionTabProps
+    | ExperimentalThreadFixedTabProps
+    | PluginNavPanelProps;
   experimental_newThreadPanelAction: PluginNewThreadPanelProps;
   pendingInteraction: PluginPendingInteractionProps;
   sidebarFooterAction: PluginSidebarFooterActionProps;
@@ -359,7 +367,7 @@ const FRONTEND_SLOT_PROP_FIELDS = {
   settingsSection: [],
   experimental_appOverlay: [],
   navPanel: ["subPath"],
-  experimental_tab: ["threadId", "subPath", "params"],
+  experimental_tab: ["threadId", "environment", "isOpen", "subPath", "params"],
   experimental_newThreadPanelAction: ["projectId", "params"],
   pendingInteraction: ["interaction", "submit", "cancel"],
   sidebarFooterAction: [],
@@ -428,7 +436,12 @@ const FRONTEND_SLOT_PROP_FIELDS = {
     "openPanel",
     "composer",
   ],
-  commandPaletteAction: ["threadId", "projectId", "openPanel"],
+  commandPaletteAction: [
+    "threadId",
+    "projectId",
+    "openPanel",
+    "experimental_toggleTab",
+  ],
   experimental_providerIcon: ["providerKind", "providerId", "icon"],
   experimental_timelineRenderer: [
     "row",
@@ -572,6 +585,7 @@ const COMMAND_PALETTE_ACTION_REGISTRATION_FIELDS = [
   "defaultShortcut",
   "id",
   "title",
+  "experimental_inactiveInInputs",
   "isAvailable",
   "run",
 ] as const satisfies readonly (keyof PluginCommandRegistration)[];

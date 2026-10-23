@@ -18,11 +18,6 @@
       "source": "./src/protocol.ts",
       "types": "./src/protocol.ts",
       "default": "./src/protocol.ts"
-    },
-    "./workspace": {
-      "source": "./src/workspace.ts",
-      "types": "./src/workspace.ts",
-      "default": "./src/workspace.ts"
     }
   },
   "types": "./src/index.ts",
@@ -33,6 +28,7 @@
   },
   "dependencies": {
     "@bb/domain": "workspace:*",
+    "bb-git-contract": "workspace:*",
     "@bb/hono-typed-routes": "workspace:*",
     "@bb/provider-bridge-protocol": "workspace:*",
     "hono": "^4.7.0",

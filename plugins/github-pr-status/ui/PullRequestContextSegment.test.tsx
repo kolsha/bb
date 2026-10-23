@@ -68,7 +68,7 @@ const PULL_REQUEST: PullRequest = {
 };
 
 const SELF = { pluginId: "bb--github-pr-status", id: "pull-request" };
-const CHANGED_FILES = { pluginId: "core", id: "changed-files" };
+const CHANGED_FILES = { pluginId: "bb--git", id: "changed-files" };
 const PARENT = { pluginId: "core", id: "parent-thread" };
 
 function show(pullRequest: PullRequest) {

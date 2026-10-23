@@ -27,6 +27,8 @@ Read the installed SDK declarations for the exact current signatures.
 - `experimental_DetailRow`
 - `experimental_InfoList`
 - `experimental_InfoListRow`
+- `experimental_InfoRowTime`
+- `experimental_InfoSubheading`
 - `useRpc`
 - `experimental_useRpcQuery`
 - `experimental_useRpcKeyedQuery`
@@ -136,10 +138,14 @@ Read the installed SDK declarations for the exact current signatures.
 - `ExperimentalThreadContextSegmentInput`
 - `ExperimentalThreadContextSegmentProps`
 - `ExperimentalThreadContextSegmentReference`
+- `ExperimentalThreadContextSegmentVisibility`
 - `ExperimentalInfoSectionProps`
 - `ExperimentalDetailRowProps`
 - `ExperimentalInfoListProps`
 - `ExperimentalInfoListRowProps`
+- `ExperimentalInfoListRowAction`
+- `ExperimentalInfoRowTimeProps`
+- `ExperimentalInfoSubheadingProps`
 - `ExperimentalPluginBrowserToolbarActionProps`
 - `ExperimentalPluginBrowserPage`
 - `ExperimentalPluginBrowserPageEvaluateOptions`
@@ -376,6 +382,7 @@ Read the installed SDK declarations for the exact current signatures.
 - `ExperimentalTabOpenOptions`
 - `ExperimentalTabTargetReference`
 - `ExperimentalThreadActionTabProps`
+- `ExperimentalThreadFixedTabProps`
 - `ExperimentalThreadTabActionContext`
 - `ExperimentalAppPanel`
 - `BbContext`

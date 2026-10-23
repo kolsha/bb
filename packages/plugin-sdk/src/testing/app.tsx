@@ -111,6 +111,8 @@ import {
   type ExperimentalDetailRowProps,
   type ExperimentalInfoListProps,
   type ExperimentalInfoListRowProps,
+  type ExperimentalInfoRowTimeProps,
+  type ExperimentalInfoSubheadingProps,
   type PluginThreadActionEntry,
   type PluginThreadActionRegistration,
   type PluginThreadActionRegistrationInfo,
@@ -354,7 +356,7 @@ interface SlotEnv {
 interface TestFixedTabTargetStore {
   clear(sequence: number): void;
   getSnapshot(): {
-    panelId: string;
+    panelId: string | null;
     sequence: number;
     tabId: string;
     target: JsonValue;
@@ -1440,6 +1442,7 @@ function TestInfoListRow({
   context,
   trailing,
   onSelect,
+  actions,
 }: ExperimentalInfoListRowProps) {
   return (
     <li>
@@ -1452,8 +1455,39 @@ function TestInfoListRow({
         </button>
       )}
       {context === undefined ? null : <span>{context}</span>}
+      {actions?.map((action) => (
+        <button
+          key={action.label}
+          type="button"
+          aria-label={action.label}
+          onClick={action.onSelect}
+        />
+      ))}
       {trailing}
     </li>
+  );
+}
+
+/** Stand-in for an Info row's relative time. */
+function TestInfoRowTime({ timestamp, detail }: ExperimentalInfoRowTimeProps) {
+  return (
+    <time dateTime={new Date(timestamp).toISOString()} title={detail}>
+      {timestamp}
+    </time>
+  );
+}
+
+/** Stand-in for an Info section's subheading. */
+function TestInfoSubheading({
+  label,
+  count,
+  trailing,
+}: ExperimentalInfoSubheadingProps) {
+  return (
+    <h4>
+      {label} · {count}
+      {trailing}
+    </h4>
   );
 }
 
@@ -1541,10 +1575,15 @@ const testPluginSdkApp = {
       store.getSnapshot,
       store.getSnapshot,
     );
+    const ownerPanelId =
+      "context" in tab
+        ? tab.context.kind === "nav-panel"
+          ? tab.context.panelId
+          : null
+        : (tab.panelId ?? null);
     if (
       state === null ||
-      state.panelId !==
-        ("context" in tab ? tab.context.panelId : tab.panelId) ||
+      state.panelId !== ownerPanelId ||
       state.tabId !== tab.id ||
       tab.experimental_target === undefined
     ) {
@@ -1651,6 +1690,8 @@ const testPluginSdkApp = {
   experimental_DetailRow: TestDetailRow,
   experimental_InfoList: TestInfoList,
   experimental_InfoListRow: TestInfoListRow,
+  experimental_InfoRowTime: TestInfoRowTime,
+  experimental_InfoSubheading: TestInfoSubheading,
   experimental_useSidebarThreads(): PluginSidebarThreadsState {
     return useSlotEnv("experimental_useSidebarThreads").sidebarThreads;
   },
@@ -2224,9 +2265,12 @@ export interface RenderSlotOptions<
   experimental_openTab?: (
     call: import("@get-bb/plugin-sdk").ExperimentalTabOpenOptions,
   ) => boolean;
-  /** Initial session target visible to `experimental_useFixedTabTarget`. */
+  /**
+   * Initial session target visible to `experimental_useFixedTabTarget`.
+   * `panelId` is null for a thread fixed tab.
+   */
   experimental_fixedTabTarget?: {
-    panelId: string;
+    panelId: string | null;
     tabId: string;
     target: JsonValue;
   };
@@ -2463,19 +2507,19 @@ export function renderSlot<
   };
   function captureFixedTabOpen(
     surface: ExperimentalFixedTabOpenCall["surface"],
-    panelId: string | undefined,
+    panelId: string | null,
     tabId: string,
     target: JsonValue | undefined,
   ): boolean {
     const call: ExperimentalFixedTabOpenCall = {
       surface: surface,
-      ...(panelId === undefined ? {} : { panelId: panelId }),
+      ...(panelId === null ? {} : { panelId: panelId }),
       tabId: tabId,
       ...(target === undefined ? {} : { target }),
     };
     experimental_fixedTabOpenCalls.push(call);
     const accepted = options.experimental_openFixedTab?.(call) ?? false;
-    if (accepted && target !== undefined && panelId !== undefined) {
+    if (accepted && target !== undefined) {
       fixedTabTargetSnapshot = {
         panelId: panelId,
         sequence: (fixedTabTargetSnapshot?.sequence ?? 0) + 1,
@@ -2517,7 +2561,7 @@ export function renderSlot<
           tabOptions.surface,
           tabOptions.tab.context.kind === "nav-panel"
             ? tabOptions.tab.context.panelId
-            : undefined,
+            : null,
           tabOptions.tab.id,
           target,
         );

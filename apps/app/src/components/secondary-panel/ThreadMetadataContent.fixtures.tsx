@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import type {
   ThreadListEntry,
-  WorkspaceMergeBase,
-  WorkspaceWorkingTree,
 } from "@bb/domain";
 import type { EnvironmentDisplayHostContext } from "@bb/core-ui";
 import {
@@ -12,6 +10,10 @@ import {
   makeWorkspaceStatus,
 } from "../../../.ladle/story-fixtures";
 import type { ThreadMetadataContentProps } from "./ThreadMetadataContent";
+import type {
+  WorkspaceMergeBase,
+  WorkspaceWorkingTree,
+} from "bb-git-contract";
 
 export { makeEnvironment, makeThread, makeWorkspaceStatus };
 
@@ -56,18 +58,11 @@ export const baseProps: ThreadMetadataContentProps = {
   environment: makeEnvironment(),
   environmentProvisioningFailure: false,
   environmentDisplayHost: localEnvironmentDisplayHost,
-  workspaceStatus: makeWorkspaceStatus(),
-  workspaceStatusError: null,
   threadEnvironmentId: null,
-  selectedMergeBaseBranch: undefined,
-  mergeBaseBranchOptions: ["main", "develop", "release/2026-04"],
-  isLoadingMergeBaseBranchOptions: false,
   updateThreadPending: false,
   onAssignParent: noop,
   onParentSelectorOpenChange: noop,
   onRetryParentThreads: noop,
-  onMergeBaseBranchChange: noop,
-  onChangedFileClick: noop,
 };
 
 export const STORY_DIRTY_WORKING_TREE: Omit<WorkspaceWorkingTree, "state"> = {

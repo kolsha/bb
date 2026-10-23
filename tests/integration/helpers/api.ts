@@ -6,7 +6,6 @@ import type {
   Thread,
   ThreadExecutionOptions,
   ThreadEventRow,
-  ThreadGitDiffResponse,
 } from "@bb/domain";
 import {
   environmentSchema,
@@ -22,10 +21,6 @@ import type {
   CreateThreadRequest,
   EnvironmentActionRequest,
   EnvironmentActionResponse,
-  EnvironmentDiffBranchesResponse,
-  EnvironmentDiffFilesResponse,
-  EnvironmentDiffPatchResponse,
-  EnvironmentStatusResponse,
   ProjectResponse,
   ResolvePendingInteractionRequest,
   SendMessageRequest,
@@ -39,11 +34,6 @@ import type {
 import {
   createPublicApiClient,
   environmentActionResponseSchema,
-  environmentDiffBranchesResponseSchema,
-  environmentDiffFilesResponseSchema,
-  environmentDiffPatchResponseSchema,
-  environmentDiffResponseSchema,
-  environmentStatusResponseSchema,
   projectResponseSchema,
   systemExecutionOptionsResponseSchema,
   threadPendingInteractionsResponseSchema,
@@ -51,6 +41,22 @@ import {
   threadTimelineResponseSchema,
   THREAD_EVENT_LIST_PAGE_SIZE,
 } from "@bb/server-contract";
+import {
+  gitBranchOptionsSchema,
+  type GitBranchOptions,
+  type ThreadGitDiffResponse,
+} from "bb-git-contract";
+import {
+  gitDiffResultSchema,
+  gitFilesResultSchema,
+  gitPatchKey,
+  gitPatchResultSchema,
+  gitStatusResultSchema,
+  type GitFilesResult,
+  type GitPatchResult,
+  type GitStatusResult,
+} from "bb-plugin-bb--git/contract";
+import { z } from "zod";
 
 export interface CreateHostThreadOptions {
   execution?: ThreadExecutionRequestOptions;
@@ -255,91 +261,99 @@ export async function getEnvironment(
   return environmentSchema.parse(await response.json());
 }
 
-export async function getEnvironmentBranches(
-  api: PublicApiClient,
-  environmentId: string,
-): Promise<EnvironmentDiffBranchesResponse> {
-  const response = await api.environments[":id"].diff.branches.$get({
-    param: { id: environmentId },
-    query: {},
+async function callGitPlugin(
+  baseUrl: string,
+  method: string,
+  input: unknown,
+): Promise<unknown> {
+  const response = await fetch(`${baseUrl}/api/v1/plugins/bb--git/rpc/${method}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
   });
-  await expectStatus(
-    response,
-    200,
-    `get environment branches ${environmentId}`,
+  if (!response.ok) {
+    throw new Error(
+      `git ${method} failed with ${response.status}: ${await response.text()}`,
+    );
+  }
+  return gitRpcEnvelopeSchema.parse(await response.json()).result;
+}
+
+const gitRpcEnvelopeSchema = z.object({
+  ok: z.literal(true),
+  result: z.unknown(),
+});
+
+export async function getEnvironmentBranches(
+  baseUrl: string,
+  environmentId: string,
+): Promise<GitBranchOptions> {
+  return gitBranchOptionsSchema.parse(
+    await callGitPlugin(baseUrl, "branches", { environmentId }),
   );
-  return environmentDiffBranchesResponseSchema.parse(await response.json());
 }
 
 export async function getEnvironmentDiff(
   api: PublicApiClient,
+  baseUrl: string,
   environmentId: string,
 ): Promise<ThreadGitDiffResponse> {
   const mergeBaseBranch = await requireMergeBaseBranch(api, environmentId);
-  const response = await api.environments[":id"].diff.$get({
-    param: { id: environmentId },
-    query: {
-      mergeBaseBranch,
-      target: "all",
-    },
-  });
-  await expectStatus(response, 200, `get environment diff ${environmentId}`);
-  const diffResponse = environmentDiffResponseSchema.parse(
-    await response.json(),
+  const result = gitDiffResultSchema.parse(
+    await callGitPlugin(baseUrl, "diff", {
+      environmentId,
+      target: { type: "all", mergeBaseBranch },
+    }),
   );
-  if (diffResponse.outcome === "available") {
-    return diffResponse.diff;
-  }
-  if (diffResponse.outcome === "not_applicable") {
-    throw new Error(diffResponse.message);
-  }
-  throw new Error(diffResponse.failure.message);
+  if (result.outcome === "available") return result.diff;
+  if (result.outcome === "not_applicable") throw new Error(result.message);
+  throw new Error(result.failure.message);
 }
 
 export async function getEnvironmentDiffFiles(
-  api: PublicApiClient,
+  baseUrl: string,
   environmentId: string,
-): Promise<EnvironmentDiffFilesResponse> {
-  const response = await api.environments[":id"].diff.files.$get({
-    param: { id: environmentId },
-    query: { target: "uncommitted" },
-  });
-  await expectStatus(
-    response,
-    200,
-    `get environment diff files ${environmentId}`,
+): Promise<GitFilesResult> {
+  return gitFilesResultSchema.parse(
+    await callGitPlugin(baseUrl, "files", {
+      environmentId,
+      target: { type: "uncommitted" },
+      ignoreWhitespace: false,
+    }),
   );
-  return environmentDiffFilesResponseSchema.parse(await response.json());
 }
 
-export async function getEnvironmentDiffPatch(
-  api: PublicApiClient,
+export async function getEnvironmentDiffPatches(
+  baseUrl: string,
   environmentId: string,
-  paths: string[],
-): Promise<EnvironmentDiffPatchResponse> {
-  const response = await api.environments[":id"].diff.patch.$post({
-    param: { id: environmentId },
-    json: { target: { type: "uncommitted" }, paths },
-  });
-  await expectStatus(
-    response,
-    200,
-    `get environment diff patch ${environmentId}`,
+  files: readonly { path: string; revision: string }[],
+): Promise<Record<string, GitPatchResult>> {
+  const keys = files.map((file) =>
+    gitPatchKey({
+      environmentId,
+      target: { type: "uncommitted" },
+      ignoreWhitespace: false,
+      path: file.path,
+      revision: file.revision,
+    }),
   );
-  return environmentDiffPatchResponseSchema.parse(await response.json());
+  return z
+    .record(z.string(), gitPatchResultSchema)
+    .parse(await callGitPlugin(baseUrl, "patches", { keys }));
 }
 
 export async function getEnvironmentStatus(
   api: PublicApiClient,
+  baseUrl: string,
   environmentId: string,
-): Promise<EnvironmentStatusResponse> {
+): Promise<GitStatusResult> {
   const mergeBaseBranch = await requireMergeBaseBranch(api, environmentId);
-  const response = await api.environments[":id"].status.$get({
-    param: { id: environmentId },
-    query: { mergeBaseBranch },
-  });
-  await expectStatus(response, 200, `get environment status ${environmentId}`);
-  return environmentStatusResponseSchema.parse(await response.json());
+  return gitStatusResultSchema.parse(
+    await callGitPlugin(baseUrl, "workspaceStatus", {
+      environmentId,
+      mergeBaseBranch,
+    }),
+  );
 }
 
 export async function getAvailableModels(

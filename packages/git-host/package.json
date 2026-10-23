@@ -1,0 +1,36 @@
+{
+  "name": "bb-git-host",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./git": {
+      "source": "./src/git.ts",
+      "types": "./src/git.ts",
+      "default": "./src/git.ts"
+    },
+    "./branch-options": {
+      "source": "./src/branch-options.ts",
+      "types": "./src/branch-options.ts",
+      "default": "./src/branch-options.ts"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "lint": "oxlint src test",
+    "typecheck": "tsrs --noEmit",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@get-bb/plugin-sdk": "workspace:*",
+    "bb-environment-provider-host": "workspace:*",
+    "bb-git-contract": "workspace:*"
+  },
+  "devDependencies": {
+    "@bb/test-helpers": "workspace:*",
+    "@bb/tsconfig": "workspace:*",
+    "@types/node": "^22.0.0",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
+  }
+}

@@ -2,20 +2,19 @@ import { z } from "zod";
 import {
   canonicalizeHostPath,
   contextSnapshotSchema,
-  BRANCH_LIST_QUERY_MAX_LENGTH,
   changedMessageLenientSchema,
   changedMessageSchema,
-  gitBranchNameSchema,
   threadUsageCostSchema,
-  gitBranchSelectionSchema,
   jsonValueSchema,
 } from "@bb/domain";
+import {
+  BRANCH_LIST_QUERY_MAX_LENGTH,
+  gitBranchNameSchema,
+  gitBranchSelectionSchema,
+} from "bb-git-contract";
 
-export {
-  BRANCH_LIST_LIMIT_MAX,
-  FILE_LIST_LIMIT_MAX,
-  FILE_LIST_QUERY_MAX_LENGTH,
-} from "@bb/domain";
+export { FILE_LIST_LIMIT_MAX, FILE_LIST_QUERY_MAX_LENGTH } from "@bb/domain";
+export { BRANCH_LIST_LIMIT_MAX } from "bb-git-contract";
 
 interface IncludeQueryValidationArgs {
   allowedValues: readonly string[];

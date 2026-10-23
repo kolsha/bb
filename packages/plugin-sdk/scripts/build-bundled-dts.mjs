@@ -75,11 +75,18 @@ const EXTERNAL = [
   /^zod($|\/)/,
 ];
 
+const UNSCOPED_WORKSPACE_PACKAGES = new Map([["bb-git-contract", "git-contract"]]);
+
 /** Resolve any `@bb/<pkg>[/<sub>]` to its `source` export target on disk. */
 function resolveBbSource(id) {
-  const match = /^@bb\/([^/]+)(\/.*)?$/.exec(id);
+  const match =
+    /^@bb\/([^/]+)(\/.*)?$/.exec(id) ??
+    /^(bb-git-contract)(\/.*)?$/.exec(id);
   if (!match) return null;
-  const pkgDir = path.join(pkgsDir, match[1]);
+  const pkgDir = path.join(
+    pkgsDir,
+    UNSCOPED_WORKSPACE_PACKAGES.get(match[1]) ?? match[1],
+  );
   const manifestPath = path.join(pkgDir, "package.json");
   if (!existsSync(manifestPath)) return null;
   const { exports } = JSON.parse(readFileSync(manifestPath, "utf8"));

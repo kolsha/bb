@@ -3,7 +3,6 @@ import {
   jsonValueSchema,
   PERSONAL_PROJECT_ID,
   threadVisibilitySchema,
-  type GitBranchSelection,
   type EnvironmentMachineSelection,
   type Thread,
   type ThreadParentNotifications,
@@ -42,6 +41,9 @@ import {
 } from "./helpers.js";
 import { parseSpawnSessionOptions } from "./session-state.js";
 import { SEND_AT_HELP, parseSendAt } from "./send-time.js";
+import type {
+  GitBranchSelection,
+} from "bb-git-contract";
 
 const PROVIDER_HELP =
   "Provider ID for the thread. Omit to use the project's remembered provider choice";

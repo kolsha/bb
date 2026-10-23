@@ -3,12 +3,12 @@ import {
   DETAIL_LABEL_CLASS,
   DETAIL_VALUE_CLASS,
 } from "@/components/ui/detail-card.js";
-import { WorkspaceChangesList } from "@/components/thread/WorkspaceChangesList";
+import { WorkspaceChangesList } from "@bb/shared-ui/workspace-changes-list";
 import {
   renderChangeSummary,
   toChangeTally,
   type WorkspaceChangedFilesSection,
-} from "@/components/workspace/workspace-change-summary";
+} from "@bb/shared-ui/workspace-change-summary";
 
 interface ChangedFilesDetailRowProps {
   section: WorkspaceChangedFilesSection;

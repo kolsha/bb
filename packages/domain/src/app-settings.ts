@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { completedTurnDisplaySchema } from "./completed-turn-display.js";
-import { isValidGitBranchName } from "./git-checkout.js";
+import { isValidGitBranchName } from "bb-git-contract";
 
 export const MANAGED_BRANCH_PREFIX_MAX_LENGTH = 64;
 
