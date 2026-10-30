@@ -1184,6 +1184,11 @@ const EXPERIMENT_DEFINITIONS: Record<
     description:
       "Compress large messages on the live connection, such as timeline updates, which cuts their size about 4x for remote access. Applies when the app reconnects.",
   },
+  reviewTabKeepAlive: {
+    label: "Keep code review tab state",
+    description:
+      "Keep the code review (git diff) panel mounted when you switch secondary-panel tabs, so its scroll position and loaded diffs are preserved instead of resetting on return.",
+  },
 };
 export function visibleExperimentKeys(
   performanceDiagnosticsAvailable: boolean,
