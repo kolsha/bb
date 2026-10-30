@@ -2096,19 +2096,7 @@ function ThreadDetailViewInternal(
                   value={fileOpenTargets}
                 >
                   <UrlOpenRoutingProvider openInAppBrowser={openBrowser}>
-                    <SelectionReplyInSideChatContext.Provider
-                      value={handleReplyInNewSideChat}
-                    >
-                      <SelectionReplyInOpenSideChatContext.Provider
-                        value={
-                          openSideChatTarget === null
-                            ? undefined
-                            : handleReplyInOpenSideChat
-                        }
-                      >
-                        {panel}
-                      </SelectionReplyInOpenSideChatContext.Provider>
-                    </SelectionReplyInSideChatContext.Provider>
+                    {panel}
                   </UrlOpenRoutingProvider>
                 </MarkdownLocalFileOpenTargetsContext.Provider>
               </MarkdownLocalFileContextMenuContext.Provider>
@@ -2169,7 +2157,17 @@ function ThreadDetailViewInternal(
             <SelectionAddToChatContext.Provider
               value={handleSelectionAddToChat}
             >
-              <ThreadContextCardProvider
+              <SelectionReplyInSideChatContext.Provider
+                value={handleReplyInNewSideChat}
+              >
+                <SelectionReplyInOpenSideChatContext.Provider
+                  value={
+                    openSideChatTarget === null
+                      ? undefined
+                      : handleReplyInOpenSideChat
+                  }
+                >
+                  <ThreadContextCardProvider
                 enabled={threadContextCardEnabled}
                 coreRows={CORE_THREAD_CONTEXT_CARD_ROWS}
                 coreSections={CORE_THREAD_CONTEXT_CARD_SECTIONS}
@@ -2183,6 +2181,8 @@ function ThreadDetailViewInternal(
               >
                 {threadDetailContent}
               </ThreadContextCardProvider>
+                </SelectionReplyInOpenSideChatContext.Provider>
+              </SelectionReplyInSideChatContext.Provider>
             </SelectionAddToChatContext.Provider>
           </AttachmentOpenerContext.Provider>
         </MarkdownLocalFileOpenTargetsContext.Provider>
