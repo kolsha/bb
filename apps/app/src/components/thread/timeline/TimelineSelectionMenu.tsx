@@ -12,6 +12,10 @@ import { preventOverlayTriggerSelection } from "@bb/shared-ui/overlay-trigger";
 import { usePortalScopeProps } from "@/lib/portal-scope";
 import { PluginItemIcon, pluginIconName } from "@/components/plugin/PluginIcon";
 import {
+  useSelectionReplyInSideChat,
+  useSelectionReplyInOpenSideChat,
+} from "@/components/thread/SelectionReplyInSideChatContext";
+import {
   firstClientRect,
   readSelectedMessageMarkdown,
   type MessageProseSelection,
@@ -208,6 +212,8 @@ export function TimelineSelectionMenu({
   container,
 }: TimelineSelectionMenuProps) {
   const portalScopeProps = usePortalScopeProps();
+  const replyInSideChat = useSelectionReplyInSideChat();
+  const replyInOpenSideChat = useSelectionReplyInOpenSideChat();
 
   useEffect(() => {
     if (selection === null || typeof window === "undefined") return;
@@ -251,6 +257,30 @@ export function TimelineSelectionMenu({
             label: "Add to chat",
             onSelect: (currentSelection: MessageProseSelection) =>
               onAddToChat(
+                readSelectedMessageMarkdown() ?? currentSelection.text,
+              ),
+          },
+        ]
+      : []),
+    ...(replyInSideChat
+      ? [
+          {
+            icon: "SideChat" as const,
+            label: "Reply in new side chat",
+            onSelect: (currentSelection: MessageProseSelection) =>
+              replyInSideChat(
+                readSelectedMessageMarkdown() ?? currentSelection.text,
+              ),
+          },
+        ]
+      : []),
+    ...(replyInOpenSideChat
+      ? [
+          {
+            icon: "SideChat" as const,
+            label: "Reply in open side chat",
+            onSelect: (currentSelection: MessageProseSelection) =>
+              replyInOpenSideChat(
                 readSelectedMessageMarkdown() ?? currentSelection.text,
               ),
           },

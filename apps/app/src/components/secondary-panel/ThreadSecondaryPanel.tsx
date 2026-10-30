@@ -85,6 +85,8 @@ import type {
   FixedPanelViewTab,
   SecondaryFixedPanelTab,
 } from "@/lib/fixed-panel-tabs-state";
+import { isGitDiffFixedPanelTab } from "@/lib/fixed-panel-tabs-state";
+import { useSystemConfig } from "@/hooks/queries/system-queries";
 import { useAppCommandShortcut } from "@/components/commands/AppCommandProvider";
 import { AppCommandShortcutHint } from "@/components/commands/AppCommandShortcutHint";
 import type { AppShortcutPresentation } from "@/lib/app-keybindings";
@@ -361,6 +363,8 @@ function ThreadSecondaryPanelContent({
       : null,
   );
   const holdsPanelContent = isAwaitingActiveFixedTab;
+  const reviewTabKeepAliveEnabled =
+    useSystemConfig().data?.experiments.reviewTabKeepAlive === true;
   const isSecondaryPanelResizing = useAtomValue(
     threadSecondaryPanelResizingAtom,
   );
@@ -708,6 +712,20 @@ function ThreadSecondaryPanelContent({
       activeSurfaceFixedTab?.contentFillsRegion === true;
     const isSurfaceTerminalActive =
       activeSurfaceModel?.kind === "terminal" && hasActiveSurfaceTab;
+    const gitDiffFixedTab = fixedSurfaceTabs.find((fixedTab) =>
+      isGitDiffFixedPanelTab(fixedTab.tab),
+    );
+    const keepGitDiffAlive =
+      reviewTabKeepAliveEnabled && gitDiffFixedTab !== undefined;
+    const showGitDiffKeepAlive =
+      keepGitDiffAlive &&
+      !isBrowserSurfaceActive &&
+      !holdsPanelContent &&
+      activeSurfaceFixedTab !== undefined &&
+      isGitDiffFixedPanelTab(activeSurfaceFixedTab.tab);
+    const gitDiffKeepAliveContent = keepGitDiffAlive
+      ? gitDiffFixedTab?.renderContent?.(paneRenderContext)
+      : null;
 
     return (
       <ImageTabLightboxProvider
@@ -799,6 +817,17 @@ function ThreadSecondaryPanelContent({
               <TitleBarScrollFade tone="sidebar" />
             ) : null}
             {browserSurface}
+            {keepGitDiffAlive && gitDiffKeepAliveContent != null ? (
+              <div
+                className={cn(
+                  "absolute inset-0 flex min-h-0 flex-1 flex-col overflow-hidden",
+                  showGitDiffKeepAlive ? "" : "invisible pointer-events-none",
+                )}
+                aria-hidden={!showGitDiffKeepAlive}
+              >
+                {gitDiffKeepAliveContent}
+              </div>
+            ) : null}
             {isBrowserSurfaceActive ? null : holdsPanelContent ? (
               <SecondaryPanelContentSkeleton />
             ) : hasActiveSurfaceTab ? (
@@ -824,8 +853,8 @@ function ThreadSecondaryPanelContent({
                   )}
                 </FilePreviewScrollPositionContext.Provider>
               </div>
-            ) : activeSurfaceFixedTab !== undefined &&
-              fixedSurfaceContent !== undefined ? (
+            ) : showGitDiffKeepAlive ? null : activeSurfaceFixedTab !==
+                undefined && fixedSurfaceContent !== undefined ? (
               <div
                 className={
                   fixedSurfaceContentFillsRegion

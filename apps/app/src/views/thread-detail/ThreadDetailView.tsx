@@ -175,11 +175,18 @@ import {
   type FileSearchSelection,
 } from "@/components/secondary-panel/useThreadFileTabs";
 import {
+  appendQuoteAndAttachmentsToDraft,
   getFilePreviewLineRangeStart,
   isSecondaryFileTab,
   isThreadForkable,
   type PromptMentionLinkResolver,
 } from "@bb/client-core";
+import { callPluginRpc } from "@/lib/plugin-sdk-hooks";
+import { appendToThreadComposerDraft } from "@/hooks/usePromptDraftStorage";
+import {
+  SelectionReplyInSideChatContext,
+  SelectionReplyInOpenSideChatContext,
+} from "@/components/thread/SelectionReplyInSideChatContext";
 import { useThreadOpenFileSignal } from "@/components/secondary-panel/useThreadOpenFileSignal";
 import type {
   SecondaryPanelFixedTab,
@@ -885,6 +892,131 @@ function ThreadDetailViewInternal(
         target: { kind: "file", path },
       }),
     [panel],
+  );
+
+  const openSideChatTabs = useMemo(() => {
+    const result: {
+      id: string;
+      threadId: string;
+      sourceThreadId: string;
+    }[] = [];
+    for (const tab of fixedPanelTabsState.secondary.tabs) {
+      if (
+        tab.kind !== "plugin-panel" ||
+        tab.pluginId !== SIDE_CHAT_PLUGIN_ID ||
+        tab.actionId !== SIDE_CHAT_PLUGIN_PANEL_ACTION_ID ||
+        tab.paramsJson === null
+      ) {
+        continue;
+      }
+      try {
+        const parsed = JSON.parse(tab.paramsJson) as {
+          threadId?: unknown;
+          sourceThreadId?: unknown;
+        };
+        if (typeof parsed.threadId === "string" && parsed.threadId.length > 0) {
+          result.push({
+            id: tab.id,
+            threadId: parsed.threadId,
+            sourceThreadId:
+              typeof parsed.sourceThreadId === "string"
+                ? parsed.sourceThreadId
+                : threadId,
+          });
+        }
+      } catch {
+        continue;
+      }
+    }
+    return result;
+  }, [fixedPanelTabsState.secondary.tabs, threadId]);
+  const activeSecondaryTabId = fixedPanelTabsState.secondary.activeTabId;
+  const [lastActiveSideChatThreadId, setLastActiveSideChatThreadId] = useState<
+    string | null
+  >(null);
+  useEffect(() => {
+    const active = openSideChatTabs.find(
+      (tab) => tab.id === activeSecondaryTabId,
+    );
+    if (active !== undefined) {
+      setLastActiveSideChatThreadId(active.threadId);
+    }
+  }, [activeSecondaryTabId, openSideChatTabs]);
+  const openSideChatTarget = useMemo(() => {
+    if (openSideChatTabs.length === 0) {
+      return null;
+    }
+    return (
+      openSideChatTabs.find(
+        (tab) => tab.threadId === lastActiveSideChatThreadId,
+      ) ??
+      openSideChatTabs.find((tab) => tab.id === activeSecondaryTabId) ??
+      openSideChatTabs[openSideChatTabs.length - 1] ??
+      null
+    );
+  }, [openSideChatTabs, lastActiveSideChatThreadId, activeSecondaryTabId]);
+  const openSideChatPanelTab = useCallback(
+    (sideChatThreadId: string, sourceThreadId: string) => {
+      panel.openTab({
+        tab: {
+          ownerId: getThreadFixedTabOwnerId(SIDE_CHAT_PLUGIN_ID),
+          tabId: SIDE_CHAT_PLUGIN_PANEL_ACTION_ID,
+        },
+        availability: "action",
+        params: { threadId: sideChatThreadId, sourceThreadId },
+      });
+    },
+    [panel],
+  );
+  const handleReplyInNewSideChat = useCallback(
+    async (text: string) => {
+      const anchorText = text.trim();
+      if (anchorText.length === 0) {
+        return;
+      }
+      try {
+        const result = await callPluginRpc(
+          fetch,
+          SIDE_CHAT_PLUGIN_ID,
+          "createSideChat",
+          { sourceThreadId: threadId, anchorText },
+        );
+        const sideChatThreadId =
+          typeof result === "object" &&
+          result !== null &&
+          typeof (result as { threadId?: unknown }).threadId === "string"
+            ? (result as { threadId: string }).threadId
+            : null;
+        if (sideChatThreadId === null) {
+          throw new Error("Unexpected createSideChat response.");
+        }
+        openSideChatPanelTab(sideChatThreadId, threadId);
+      } catch (error) {
+        appToast.error(
+          `Failed to start side chat: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    },
+    [threadId, openSideChatPanelTab],
+  );
+  const handleReplyInOpenSideChat = useCallback(
+    (text: string) => {
+      if (text.trim().length === 0 || openSideChatTarget === null) {
+        return;
+      }
+      appendToThreadComposerDraft(
+        {
+          projectId: thread?.projectId ?? projectId,
+          threadId: openSideChatTarget.threadId,
+        },
+        (current) => appendQuoteAndAttachmentsToDraft(current, text, []),
+      );
+      openSideChatPanelTab(
+        openSideChatTarget.threadId,
+        openSideChatTarget.sourceThreadId,
+      );
+    },
+    [openSideChatTarget, thread?.projectId, projectId, openSideChatPanelTab],
   );
 
   const handleSelectFileSearchResult = useCallback(
@@ -1964,7 +2096,19 @@ function ThreadDetailViewInternal(
                   value={fileOpenTargets}
                 >
                   <UrlOpenRoutingProvider openInAppBrowser={openBrowser}>
-                    {panel}
+                    <SelectionReplyInSideChatContext.Provider
+                      value={handleReplyInNewSideChat}
+                    >
+                      <SelectionReplyInOpenSideChatContext.Provider
+                        value={
+                          openSideChatTarget === null
+                            ? undefined
+                            : handleReplyInOpenSideChat
+                        }
+                      >
+                        {panel}
+                      </SelectionReplyInOpenSideChatContext.Provider>
+                    </SelectionReplyInSideChatContext.Provider>
                   </UrlOpenRoutingProvider>
                 </MarkdownLocalFileOpenTargetsContext.Provider>
               </MarkdownLocalFileContextMenuContext.Provider>
