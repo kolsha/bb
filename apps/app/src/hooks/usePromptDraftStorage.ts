@@ -237,6 +237,21 @@ function getPromptDraftStorageKey(scope: PromptDraftScope): string {
     const normalizedKey = normalizeStorageSegment(scope.key);
     return `${PROMPT_DRAFT_STORAGE_PREFIX}-plugin-draft-${normalizedKey}-${PROMPT_DRAFT_STORAGE_VERSION}`;
   }
+  return getThreadPromptDraftStorageKey(scope);
+}
+
+export function appendToThreadComposerDraft(
+  scope: { projectId: string; threadId: string },
+  append: (current: PromptDraftState) => PromptDraftState,
+): void {
+  const storageKey = getThreadPromptDraftStorageKey(scope);
+  writePromptDraft(storageKey, append(readPromptDraft(storageKey)));
+}
+
+function getThreadPromptDraftStorageKey(scope: {
+  projectId: string;
+  threadId: string;
+}): string {
   const normalizedProjectId = normalizeStorageSegment(scope.projectId);
   const normalizedThreadId = normalizeStorageSegment(scope.threadId);
   return `${PROMPT_DRAFT_STORAGE_PREFIX}-${normalizedProjectId}-${normalizedThreadId}-${PROMPT_DRAFT_STORAGE_VERSION}`;
