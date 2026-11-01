@@ -42,6 +42,7 @@ const unavailableSystemConfig: SystemConfigResponse = {
     timelinePush: false,
     unreadDividerAtAnswer: false,
     websocketCompression: false,
+    reviewTabKeepAlive: false,
   },
   appearance: defaultAppTheme,
   customThemes: [],

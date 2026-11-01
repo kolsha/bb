@@ -13,6 +13,7 @@ export const experimentKeys = [
   "timelinePush",
   "unreadDividerAtAnswer",
   "websocketCompression",
+  "reviewTabKeepAlive",
 ] as const;
 export const experimentKeySchema = z.enum(experimentKeys);
 export type ExperimentKey = z.infer<typeof experimentKeySchema>;
@@ -39,6 +40,7 @@ export const defaultExperiments: Experiments = {
   timelinePush: false,
   unreadDividerAtAnswer: false,
   websocketCompression: false,
+  reviewTabKeepAlive: false,
 };
 
 export const earlyAdopterExperiments: Experiments = {
@@ -54,4 +56,5 @@ export const earlyAdopterExperiments: Experiments = {
   timelinePush: true,
   unreadDividerAtAnswer: true,
   websocketCompression: true,
+  reviewTabKeepAlive: false,
 };
